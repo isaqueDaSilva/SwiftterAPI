@@ -13,6 +13,7 @@ typealias SignInResponse = SignInAndSignUpResponse
 
 struct SignInAndSignUpResponse: Content {
     let accessToken: String
-    let refreshToken: String
+    let refreshToken: Data
+    let serverPublicKey: Data
     let userProfile: Profile
 }
