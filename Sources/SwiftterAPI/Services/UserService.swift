@@ -7,7 +7,7 @@
 
 import Vapor
 
-enum UserServices {
+enum UserService {
     /// Creates a new user at the database.
     /// - Parameter request: The main request object that is responsible to perform the operation.
     /// - Returns: Returns an instance of the generated user.

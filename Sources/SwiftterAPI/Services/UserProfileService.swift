@@ -8,7 +8,7 @@
 import Fluent
 import Vapor
 
-enum UserProfileServices {
+enum UserProfileService {
     /// Creates a new profile for an user.
     /// - Parameters:
     ///   - userSlug: A slug value for add as identifier at the profile of the user.
