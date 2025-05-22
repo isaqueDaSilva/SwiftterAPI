@@ -15,4 +15,45 @@ enum EnvironmentValues {
         
         return databaseKey
     }
+    
+    static func swiftterJWTISSUER() throws -> String {
+        guard let subjectClaim = Environment.get("JWT_ISSUER") else {
+            print("SWIFTTER_JWTSUB was not found.")
+            throw Abort(.internalServerError)
+        }
+        
+        return subjectClaim
+    }
+    
+    static func fullAccessJWTAudience() throws -> String {
+        guard let jwtSecret = Environment.get("FULL_ACCESS_JWT_AUDIENCE") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return jwtSecret
+    }
+    
+    static func refreshJWTAudience() throws -> String {
+        guard let jwtSecret = Environment.get("REFRESH_JWT_AUDIENCE") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return jwtSecret
+    }
+    
+    static func accessTokenSecret() throws -> String {
+        guard let jwtSecret = Environment.get("ACCESS_TOKEN_SECRET") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return jwtSecret
+    }
+    
+    static func refreshTokenSecret() throws -> String {
+        guard let jwtSecret = Environment.get("REFRESH_TOKEN_SECRET") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return jwtSecret
+    }
 }
