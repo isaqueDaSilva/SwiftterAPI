@@ -14,8 +14,8 @@ struct CreateUserRequest {
     let email: String
     let birthDate: Date
     let password: Data
-    let publicKeyForPassword: ECPublicKey
-    let publicKeyForToken: String
+    let publicKeyForPassword: ECKeyPair
+    let publicKeyForToken: Data
 }
 
 extension CreateUserRequest {
@@ -35,7 +35,7 @@ extension CreateUserRequest: Content {
         self.email = try container.decode(String.self, forKey: .email)
         self.birthDate = try container.decode(Date.self, forKey: .birthDate)
         self.password = try container.decode(Data.self, forKey: .password)
-        self.publicKeyForPassword = try container.decode(ECPublicKey.self, forKey: .publicKeyForPassword)
-        self.publicKeyForToken = try container.decode(String.self, forKey: .publicKeyForToken)
+        self.publicKeyForPassword = try container.decode(ECKeyPair.self, forKey: .publicKeyForPassword)
+        self.publicKeyForToken = try container.decode(Data.self, forKey: .publicKeyForToken)
     }
 }

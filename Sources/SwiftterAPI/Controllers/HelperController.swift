@@ -9,8 +9,8 @@ import Vapor
 
 struct HelperController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        routes.get("public-key") { _ async throws -> ECPublicKey in
-            try await SecureCommunicationHandler.generatesPublicKey()
+        routes.get("public-key") { _ async throws -> ECKeyPair in
+            try await CryptographyHandler.generatesPublicKey()
         }
     }
 }
