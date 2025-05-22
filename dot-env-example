@@ -1,0 +1,3 @@
+// Use this document as base to create your own '.env' file for run this server.
+
+DATABASE_URL=postgresql://url-of-database
