@@ -138,6 +138,6 @@ extension Payload {
             throw Abort(.unauthorized)
         }
         
-        try self.audience.verifyIntendedAudience(includes: "")
+        try self.audience.verifyIntendedAudience(includes: audience)
     }
 }
