@@ -19,7 +19,7 @@ extension Payload {
             case .fullAccess:
                 try audience.insert(EnvironmentValues.fullAccessJWTAudience(), at: 1)
             case .refresh:
-                audience.insert(try EnvironmentValues.refreshJWTAudience(), at: 1)
+                try audience.insert(EnvironmentValues.refreshJWTAudience(), at: 1)
             }
             
             return .init(value: audience)
