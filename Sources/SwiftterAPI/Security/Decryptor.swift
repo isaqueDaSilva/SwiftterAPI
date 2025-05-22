@@ -13,13 +13,24 @@ enum Decryptor {
     ///   - field: The data representation of the field.
     ///   - publicKey: The client's public key to perform the shared key calculation.
     /// - Returns: Returns a string representation of the encrypted field.
-    static func decryptField(_ field: Data, with publicKey: ECPublicKey) async throws -> String {
-        let sharedKey = try await SecureCommunicationHandler.generateSharedKey(for: publicKey)
+    static func decryptField(_ field: Data, with keyPair: ECKeyPair) async throws -> String {
+        guard let serverPrivateKey = await SecureKeysCache.shared[keyPair.privateKeyID] else {
+            throw Abort(.internalServerError, reason: "No Server's private key available.")
+        }
         
-        let decryptedField = try SecureCommunicationHandler.decryptField(
+        let clientPublicKey = try PublicKey(rawRepresentation: keyPair.publicKey)
+        
+        let sharedKey = try await CryptographyHandler.generateSharedKey(
+            with: clientPublicKey,
+            and: serverPrivateKey
+        )
+        
+        let decryptedField = try CryptographyHandler.decryptField(
             encryptedField: field,
             key: sharedKey
         )
+        
+        await SecureKeysCache.shared.remove(for: keyPair.privateKeyID)
         
         guard let decryptedField else {
             throw Abort(
