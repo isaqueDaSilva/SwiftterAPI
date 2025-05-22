@@ -21,8 +21,9 @@ struct AuthController: RouteCollection {
 extension AuthController {
     @Sendable
     private func signUp(with request: Request) async throws -> SignUpResponse {
-        let createUserDTO = try request.content.decode(CreateUser.self)
-        let newUser = try await UserService.create(with: createUserDTO, request: request)
+        let createUserRequestDTO = try request.content.decode(CreateUserRequest.self)
+        
+        let newUser = try await UserService.create(with: createUserRequestDTO, request: request)
         let userSlug = try await SlugGenerator.generate(for: newUser.name, with: request.db)
         let newProfile = try await UserProfileService.create(
             with: userSlug,
@@ -30,12 +31,18 @@ extension AuthController {
             at: request.db
         )
         
-        let accessPayload = try Payload(with: newUser.requireID(), userSlug: userSlug, audienceType: .fullAccess)
-        let accessToken = try await request.jwt.sign(accessPayload, kid: JWTSecretIdentifier.accessTokenSecreyKey.key)
+        let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
+            userID: newUser.requireID(),
+            userSlug: userSlug,
+            clientPublicKeyData: createUserRequestDTO.publicKeyForToken,
+            request: request
+        )
         
-        let refreshPayload = try Payload(with: newUser.requireID(), userSlug: userSlug, audienceType: .refresh)
-        let refreshToken = try await request.jwt.sign(accessPayload, kid: JWTSecretIdentifier.refreshTokenSecreyKey.key)
-        
-        return try .init(accessToken: accessToken, refreshToken: refreshToken, userProfile: newProfile.toDTO())
+        return try .init(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            serverPublicKey: publicKey,
+            userProfile: newProfile.toDTO()
+        )
     }
 }
