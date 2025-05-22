@@ -1,3 +1,8 @@
 // Use this document as base to create your own '.env' file for run this server.
 
 DATABASE_URL=postgresql://url-of-database
+JWT_ISSUER=any_issuer_to_identify_if_the_token_was_generated_and_sign_by_this_server
+FULL_ACCESS_JWT_AUDIENCE=anything_to_identify_that_this_audience_grants_full_access_to_anything_in_the_plataform
+REFRESH_JWT_AUDIENCE=anything_to_identify_that_this_audience_grants_only_access_to_refresh_token
+ACCESS_TOKEN_SECRET=anything_to_signing_the_access_token
+REFRESH_TOKEN_SECRET=anything_to_signing_the_refresh_token
