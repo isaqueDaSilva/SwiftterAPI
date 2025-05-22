@@ -44,7 +44,7 @@ final class User: Model, @unchecked Sendable {
     
     /// Create a new user instance.
     init(
-        from dto: CreateUser,
+        from dto: CreateUserRequest,
         passwordHash: String
     ) {
         self.id = .init()

@@ -7,7 +7,7 @@
 
 import Vapor
 
-extension CreateUser: Validatable {
+extension CreateUserRequest: Validatable {
     static func validations(_ validations: inout Validations) {
         validations.add(
             Key.name.key,
