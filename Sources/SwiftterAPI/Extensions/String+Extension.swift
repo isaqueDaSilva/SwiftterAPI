@@ -1,6 +1,13 @@
-// Original Source: https://www.hackingwithswift.com/example-code/strings/how-to-convert-a-string-to-a-safe-format-for-url-slugs-and-filename
+//
+//  String+Extension.swift
+//  SwiftterAPI
+//
+//  Created by Isaque da Silva on 5/23/25.
+//
 
 import Vapor
+
+// MARK: - Original Source: https://www.hackingwithswift.com/example-code/strings/how-to-convert-a-string-to-a-safe-format-for-url-slugs-and-filename -
 
 // MARK: Slug generator
 
@@ -26,5 +33,21 @@ extension String {
         }
         
         return self.wholeMatch(of: regex) != nil
+    }
+}
+
+// MARK: - My code -
+
+extension String {
+    /// Transform a base64 string representation into a binary data type.
+    /// - Returns: Returns a binary data representation of the given base64 string.
+    func toData() throws -> Data {
+        let string = Data(base64Encoded: self)
+        
+        guard let data = string else {
+            throw Abort(.unauthorized)
+        }
+        
+        return data
     }
 }
