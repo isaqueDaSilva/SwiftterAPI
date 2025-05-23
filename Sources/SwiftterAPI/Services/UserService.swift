@@ -5,6 +5,7 @@
 //  Created by Isaque da Silva on 5/21/25.
 //
 
+import Fluent
 import Vapor
 
 enum UserService {
@@ -29,5 +30,25 @@ enum UserService {
         try await newUser.create(on: request.db)
         
         return newUser
+    }
+    
+    /// Loads an user representation from database with your email and password, along side with your profile.
+    /// - Parameters:
+    ///   - email: The email of the user that is used to get a user.
+    ///   - database: The database client representation to mediates the communication between the API and the Database system.
+    /// - Returns: Returns a representation of an user that matches with the given email.
+    static func getUser(by email: String, at database: any Database) async throws -> User {
+        let user = try await User.query(on: database)
+            .filter(\.$email, .equal, email)
+            .with(\.$profile)
+            .field(\.$email)
+            .field(\.$passwordHash)
+            .first()
+        
+        guard let user else {
+            throw Abort(.notFound)
+        }
+        
+        return user
     }
 }
