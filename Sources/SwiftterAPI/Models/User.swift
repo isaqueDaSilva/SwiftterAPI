@@ -40,6 +40,12 @@ final class User: Model, @unchecked Sendable {
     @Field(key: FieldName.createdAt.key)
     var createdAt: Date?
     
+    /// The profile of the user.
+    ///
+    /// >Note: Although it is noted as optional child, the user profile persists as long as the user exists.
+    @OptionalChild(for: \.$user)
+    var profile: UserProfile?
+    
     init() { }
     
     /// Create a new user instance.
@@ -55,3 +61,5 @@ final class User: Model, @unchecked Sendable {
         self.createdAt = .now
     }
 }
+
+extension User: Authenticatable { }
