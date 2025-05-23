@@ -15,5 +15,5 @@ func routes(_ app: Application) throws {
     try apiRoute.register(collection: AuthController())
     try apiRoute.register(collection: HelperController())
     
-    print(app.routes)
+    print(app.routes.all)
 }
