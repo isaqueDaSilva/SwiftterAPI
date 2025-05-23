@@ -7,8 +7,6 @@
 
 import Vapor
 
-/// The representation of the DTO object that will be used to decode a JSON object,
-/// coming from the request, with the users informations to create their account.
 struct CreateUserRequest {
     let name: String
     let email: String
