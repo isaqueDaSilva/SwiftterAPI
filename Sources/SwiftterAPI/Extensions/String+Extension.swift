@@ -45,7 +45,7 @@ extension String {
         let string = Data(base64Encoded: self)
         
         guard let data = string else {
-            throw Abort(.unauthorized)
+            throw Abort(.notAcceptable)
         }
         
         return data
