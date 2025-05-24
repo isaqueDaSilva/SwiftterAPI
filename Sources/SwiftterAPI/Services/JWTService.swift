@@ -26,9 +26,7 @@ enum JWTService {
     ) async throws -> (accessToken: String, encryptedRefreshToken: Data, publicKey: Data) {
         let (accessToken, refreshToken) = try await Self.createTokens(with: userID, userSlug: userSlug, and: request)
         
-        guard let refreshTokenData = refreshToken.data(using: .utf8) else {
-            throw Abort(.notAcceptable, reason: "Error to generate tokens.")
-        }
+        let refreshTokenData = try refreshToken.toData()
         
         let serverPrivateKey = PrivateKey()
         let clientPublicKey = try PublicKey(rawRepresentation: clientPublicKeyData)

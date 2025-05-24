@@ -17,7 +17,7 @@ enum UserService {
         
         let password = try await Decryptor.decryptField(
             createUserDTO.password,
-            with: createUserDTO.publicKeyForPassword
+            with: createUserDTO.keyCollection.keyPairForPassword
         )
         
         guard PasswordChecker.check(password) else {

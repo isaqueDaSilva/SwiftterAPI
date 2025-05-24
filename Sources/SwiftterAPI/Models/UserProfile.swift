@@ -80,7 +80,7 @@ extension UserProfile {
 }
 
 extension UserProfile: Convertable {
-    /// Transform this database representation model into a DTO model to send back as a response.
+    /// Transform the database representation model into a DTO model to send back as a response.
     /// - Returns: Retuns a DTO representation of this profile.
     func toDTO() throws -> Profile {
         try .init(

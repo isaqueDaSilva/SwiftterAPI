@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  UserProfile+Migration.swift
 //  SwiftterAPI
 //
 //  Created by Isaque da Silva on 5/21/25.
