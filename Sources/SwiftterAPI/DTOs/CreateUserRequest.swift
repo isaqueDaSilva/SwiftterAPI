@@ -12,13 +12,12 @@ struct CreateUserRequest {
     let email: String
     let birthDate: Date
     let password: Data
-    let publicKeyForPassword: ECKeyPair
-    let publicKeyForToken: Data
+    let keyCollection: KeyCollection
 }
 
 extension CreateUserRequest {
     enum Key: String, CodingKey, ValidationKeyProtocol {
-        case name, email, birthDate, password, publicKeyForPassword, publicKeyForToken
+        case name, email, birthDate, password, keyCollection
         
         var key: ValidationKey {
             .init(stringLiteral: self.rawValue)
@@ -33,7 +32,6 @@ extension CreateUserRequest: Content {
         self.email = try container.decode(String.self, forKey: .email)
         self.birthDate = try container.decode(Date.self, forKey: .birthDate)
         self.password = try container.decode(Data.self, forKey: .password)
-        self.publicKeyForPassword = try container.decode(ECKeyPair.self, forKey: .publicKeyForPassword)
-        self.publicKeyForToken = try container.decode(Data.self, forKey: .publicKeyForToken)
+        self.keyCollection = try container.decode(KeyCollection.self, forKey: .keyCollection)
     }
 }
