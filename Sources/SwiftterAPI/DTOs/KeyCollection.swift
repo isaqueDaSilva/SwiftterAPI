@@ -5,4 +5,9 @@
 //  Created by Isaque da Silva on 5/23/25.
 //
 
-import Foundation
+import Vapor
+
+struct KeyCollection: Content {
+    let keyPairForPassword: ECKeyPair
+    let publicKeyForToken: Data
+}
