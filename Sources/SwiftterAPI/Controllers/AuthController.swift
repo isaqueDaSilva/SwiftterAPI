@@ -25,7 +25,7 @@ extension AuthController {
         
         let newUser = try await UserService.create(with: createUserRequestDTO, request: request)
         let userSlug = try await SlugGenerator.generate(for: newUser.name, with: request.db)
-        let newProfile = try await UserProfileService.create(
+        let newUserProfile = try await UserProfileService.create(
             with: userSlug,
             userID: newUser.requireID(),
             at: request.db
@@ -33,18 +33,11 @@ extension AuthController {
         
         let clientPublicKey = createUserRequestDTO.keyCollection.publicKeyForToken
         
-        let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
-            userID: newUser.requireID(),
-            userSlug: userSlug,
-            clientPublicKeyData: clientPublicKey,
-            request: request
-        )
-        
-        return try .init(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            serverPublicKey: publicKey,
-            userProfile: newProfile.toDTO()
+        return try await .build(
+            with: newUser.requireID(),
+            userProfile: newUserProfile,
+            clientPublicKey: clientPublicKey,
+            and: request
         )
     }
     
@@ -56,18 +49,11 @@ extension AuthController {
         
         guard let userProfile = user.profile else { throw Abort(.unauthorized) }
         
-        let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
-            userID: user.requireID(),
-            userSlug: userProfile.requireID(),
-            clientPublicKeyData: clientPublicKey,
-            request: request
-        )
-        
-        return try .init(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            serverPublicKey: publicKey,
-            userProfile: userProfile.toDTO()
+        return try await .build(
+            with: user.requireID(),
+            userProfile: userProfile,
+            clientPublicKey: clientPublicKey,
+            and: request
         )
     }
 }
