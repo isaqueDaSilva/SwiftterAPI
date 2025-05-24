@@ -9,8 +9,8 @@ import Vapor
 
 struct AuthenticatorMiddleware: AsyncBasicAuthenticator {
     func authenticate(basic: BasicAuthorization, for request: Request) async throws {
-        let keyPair = try request.content.decode(ECKeyPair.self)
-        let sharedKey = try await makeSharedKey(with: keyPair)
+        let keyCollection = try request.content.decode(KeyCollection.self)
+        let sharedKey = try await makeSharedKey(with: keyCollection.keyPairForPassword)
         let encryptedPasswordData = try basic.password.toData()
         let decryptedPassword = try CryptographyHandler.decryptField(
             encryptedField: encryptedPasswordData,
