@@ -8,13 +8,13 @@
 import JWT
 import Vapor
 
-struct AuthController: RouteCollection {
+struct AuthController: RouteCollection, ProtectedRouteProtocol {
     func boot(routes: any RoutesBuilder) throws {
         let authRoute = routes.grouped("auth")
+        let userProtectedRoute = userProtectedRoute(with: authRoute)
         
-        authRoute.post("signup") { request async throws -> SignUpResponse in
-            try await self.signUp(with: request)
-        }
+        authRoute.post("signup") { try await self.signUp(with: $0) }
+        userProtectedRoute.post("signin") { try await self.signIn(with: $0) }
     }
 }
 
@@ -31,10 +31,12 @@ extension AuthController {
             at: request.db
         )
         
+        let clientPublicKey = createUserRequestDTO.keyCollection.publicKeyForToken
+        
         let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
             userID: newUser.requireID(),
             userSlug: userSlug,
-            clientPublicKeyData: createUserRequestDTO.publicKeyForToken,
+            clientPublicKeyData: clientPublicKey,
             request: request
         )
         
@@ -43,6 +45,29 @@ extension AuthController {
             refreshToken: refreshToken,
             serverPublicKey: publicKey,
             userProfile: newProfile.toDTO()
+        )
+    }
+    
+    @Sendable
+    private func signIn(with request: Request) async throws -> SignInResponse {
+        let user = try request.auth.require(User.self)
+        let keyCollection = try request.content.decode(KeyCollection.self)
+        let clientPublicKey = keyCollection.publicKeyForToken
+        
+        guard let userProfile = user.profile else { throw Abort(.unauthorized) }
+        
+        let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
+            userID: user.requireID(),
+            userSlug: userProfile.requireID(),
+            clientPublicKeyData: clientPublicKey,
+            request: request
+        )
+        
+        return try .init(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            serverPublicKey: publicKey,
+            userProfile: userProfile.toDTO()
         )
     }
 }
