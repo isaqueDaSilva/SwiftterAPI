@@ -5,6 +5,7 @@
 //  Created by Isaque da Silva on 5/22/25.
 //
 
+import Fluent
 import JWT
 import Vapor
 
@@ -23,19 +24,21 @@ enum JWTService {
         userSlug: String,
         clientPublicKeyData: Data,
         request: Request
-    ) async throws -> (accessToken: String, encryptedRefreshToken: Data, publicKey: Data) {
-        let (accessToken, refreshToken) = try await Self.createTokens(with: userID, userSlug: userSlug, and: request)
-        
-        let refreshTokenData = try refreshToken.toData()
-        
+    ) async throws -> TokenPair {
         let serverPrivateKey = PrivateKey()
         let clientPublicKey = try PublicKey(rawRepresentation: clientPublicKeyData)
         
-        let encryptedRefreshToken = try await Encryptor.encrypts(refreshTokenData, with: serverPrivateKey, and: clientPublicKey)
+        let (accessToken, refreshToken) = try await Self.createTokens(
+            with: userID,
+            userSlug: userSlug,
+            serverPrivateKey: serverPrivateKey,
+            clientPublicKey: clientPublicKey,
+            and: request
+        )
         
-        return (
+        return .init(
             accessToken: accessToken,
-            encryptedRefreshToken: encryptedRefreshToken,
+            refreshToken: refreshToken,
             publicKey: serverPrivateKey.rawRepresentation
         )
     }
@@ -49,8 +52,10 @@ enum JWTService {
     static private func createTokens(
         with userID: UUID,
         userSlug: String,
+        serverPrivateKey: PrivateKey,
+        clientPublicKey: PublicKey,
         and request: Request
-    ) async throws -> (accessToken: String, refreshToken: String) {
+    ) async throws -> (accessToken: Token, refreshToken: Token) {
         let accessPayload = try Payload(with: userID, userSlug: userSlug, audienceType: .fullAccess)
         let refreshPayload = try Payload(with: userID, userSlug: userSlug, audienceType: .refresh)
         
@@ -63,6 +68,65 @@ enum JWTService {
             throw Abort(.notAcceptable, reason: "Error to generate tokens.")
         }
         
-        return (tokens[0], tokens[1])
+        let encryptedRefreshToken = try await Encryptor.encrypts(
+            tokens[1].toData(),
+            with: serverPrivateKey,
+            and: clientPublicKey
+        )
+        
+        return (
+            .init(
+                token: tokens[0],
+                expirationTime: accessPayload.expiration.value
+            ),
+            .init(
+                token: encryptedRefreshToken.base64EncodedString(),
+                expirationTime: refreshPayload.expiration.value
+            )
+        )
+    }
+    
+    /// Checks if the given Refresh Token is valid to flow with the action.
+    /// - Parameters:
+    ///   - tokenID: The id of the token, contained at `jti`
+    ///   - tokenValue: The base64 raw value of the token, to check if it exist at the database.
+    ///   - database: The database client representation to mediates the communication between the API and the Database system.
+    /// - Returns: A boolean value that idicates if the token exists or not.
+    static func isTokenValid(
+        by tokenID: String,
+        and tokenValue: String,
+        on database: any Database
+    ) async throws -> Bool {
+        try await DisabledToken
+            .query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$id, .equal, tokenID)
+                    .filter(\.$tokenValue, .equal, tokenValue)
+            }
+            .first() == nil
+    }
+    
+    static func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
+        try await DisabledToken(tokenID: tokenID, tokenValue: tokenValue).create(on: database)
+    }
+    
+    static func verifyClaimsAtPairOf(
+        accessTokenPayload: Payload,
+        refreshTokenPayload: Payload,
+        at database: any Database
+    ) async throws {
+        guard accessTokenPayload.subject.value == refreshTokenPayload.subject.value,
+              accessTokenPayload.userSlug == refreshTokenPayload.userSlug
+        else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard let userID = UUID(refreshTokenPayload.subject.value),
+              let user = try await UserService.getUser(by: userID, at: database),
+              try user.profile?.requireID() == refreshTokenPayload.userSlug
+        else {
+            throw Abort(.unauthorized)
+        }
     }
 }
