@@ -5,22 +5,17 @@
 //  Created by Isaque da Silva on 5/21/25.
 //
 
-
 import Vapor
 
 typealias SignUpResponse = SignInAndSignUpResponse
 typealias SignInResponse = SignInAndSignUpResponse
 
 struct SignInAndSignUpResponse: Content {
-    let accessToken: String
-    let refreshToken: Data
-    let serverPublicKey: Data
+    let tokens: TokenPair
     let userProfile: Profile
     
-    private init(accessToken: String, refreshToken: Data, serverPublicKey: Data, userProfile: Profile) {
-        self.accessToken = accessToken
-        self.refreshToken = refreshToken
-        self.serverPublicKey = serverPublicKey
+    private init(tokenPair: TokenPair, userProfile: Profile) {
+        self.tokens = tokenPair
         self.userProfile = userProfile
     }
 }
@@ -32,7 +27,7 @@ extension SignInAndSignUpResponse {
         clientPublicKey: Data,
         and request: Request
     ) async throws -> SignInAndSignUpResponse {
-        let (accessToken, refreshToken, publicKey) = try await JWTService.createPairOfJWT(
+        let tokenPair = try await JWTService.createPairOfJWT(
             userID: userID,
             userSlug: userProfile.requireID(),
             clientPublicKeyData: clientPublicKey,
@@ -40,9 +35,7 @@ extension SignInAndSignUpResponse {
         )
         
         return try .init(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            serverPublicKey: publicKey,
+            tokenPair: tokenPair,
             userProfile: userProfile.toDTO()
         )
     }
