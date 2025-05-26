@@ -27,7 +27,8 @@ struct VerifyAndDisableTokensMiddleware: AsyncMiddleware {
         
         let (accessPayload, refreshPayload) = try await self.getPayloads(
             for: fields.accessToken,
-            and: decryptedRefreshToken
+            and: decryptedRefreshToken,
+            in: request.jwt
         )
         
         try await JWTService.verifyClaimsAtPairOf(
@@ -58,10 +59,11 @@ struct VerifyAndDisableTokensMiddleware: AsyncMiddleware {
     
     private func getPayloads(
         for accessToken: String,
-        and refreshToken: String
+        and refreshToken: String,
+        in jwt: Request.JWT
     ) async throws -> (accessTokenPayload: Payload, refreshTokenPayload: Payload) {
         async let accessTokenPayload = try self.getPayload(on: accessToken.toData())
-        async let refreshTokenPayload = try self.getPayload(on: refreshToken.toData())
+        async let refreshTokenPayload = try jwt.verify(refreshToken, as: Payload.self)
         
         let payloads = try await [accessTokenPayload, refreshTokenPayload]
         
