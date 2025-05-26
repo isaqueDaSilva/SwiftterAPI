@@ -5,4 +5,26 @@
 //  Created by Isaque da Silva on 5/23/25.
 //
 
-import Foundation
+import Vapor
+
+protocol ProtectedRouteProtocol {
+    func userProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder
+    func tokenProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder
+}
+
+extension ProtectedRouteProtocol {
+    func userProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder {
+        let userAuthenticator = AuthenticatorMiddleware()
+        let userGuardMiddleware = User.guardMiddleware()
+        
+        return routes.grouped(userAuthenticator, userGuardMiddleware)
+    }
+    
+    func tokenProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder {
+        let tokenAuthenticator = Payload.authenticator()
+//        let tokenCheckerMiddleware = TokenCheckerMiddleware()
+        let tokenGuardMiddleware = Payload.guardMiddleware()
+        
+        return routes.grouped(tokenAuthenticator, tokenGuardMiddleware)
+    }
+}
