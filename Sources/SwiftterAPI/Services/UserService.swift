@@ -17,7 +17,7 @@ enum UserService {
         
         let password = try await Decryptor.decryptField(
             createUserDTO.password,
-            with: createUserDTO.keyCollection.keyPairForPassword
+            with: createUserDTO.keyCollection.keyPairForDecryption
         )
         
         guard PasswordChecker.check(password) else {
@@ -50,5 +50,17 @@ enum UserService {
         }
         
         return user
+    }
+    
+    /// Gets an user by your id value.
+    /// - Parameters:
+    ///   - id: The id of the user that is requested to find,
+    ///   - database: The database client representation to mediates the communication between the API and the Database system.
+    /// - Returns: Returns an optional instance, where if the user was find, the value will be there or if not, the value will be nil.
+    static func getUser(by id: UUID, at database: any Database) async throws -> User? {
+        try await User.query(on: database)
+            .filter(\.$id, .equal, id)
+            .with(\.$profile)
+            .first()
     }
 }
