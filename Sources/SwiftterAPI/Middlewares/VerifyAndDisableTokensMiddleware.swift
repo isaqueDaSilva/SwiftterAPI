@@ -1,5 +1,5 @@
 //
-//  DisableTokensMiddleware.swift
+//  VerifyAndDisableTokensMiddleware.swift
 //  SwiftterAPI
 //
 //  Created by Isaque da Silva on 5/24/25.
@@ -30,9 +30,9 @@ struct VerifyAndDisableTokensMiddleware: AsyncMiddleware {
             and: decryptedRefreshToken
         )
         
-        try await JWTService.verifyClaims(
+        try await JWTService.verifyClaimsAtPairOf(
             accessTokenPayload: accessPayload,
-            refreshToken: refreshPayload,
+            refreshTokenPayload: refreshPayload,
             at: request.db
         )
         
@@ -45,6 +45,7 @@ struct VerifyAndDisableTokensMiddleware: AsyncMiddleware {
         )
         
         request.auth.login(refreshPayload)
+        try await request.cache.set(KeyCollection.storageKey, to: fields.keyPair.publicKeyForEncryption, expiresIn: .minutes(2))
         
         return try await next.respond(to: request)
     }
