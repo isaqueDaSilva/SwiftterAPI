@@ -10,7 +10,7 @@ import Vapor
 struct AuthenticatorMiddleware: AsyncBasicAuthenticator {
     func authenticate(basic: BasicAuthorization, for request: Request) async throws {
         let keyCollection = try request.content.decode(KeyCollection.self)
-        let sharedKey = try await makeSharedKey(with: keyCollection.keyPairForPassword)
+        let sharedKey = try await SharedKeyMaker.makeSharedKey(with: keyCollection.keyPairForDecryption)
         let encryptedPasswordData = try basic.password.toData()
         let decryptedPassword = try CryptographyHandler.decryptField(
             encryptedField: encryptedPasswordData,
@@ -26,18 +26,5 @@ struct AuthenticatorMiddleware: AsyncBasicAuthenticator {
         }
         
         request.auth.login(user)
-    }
-    
-    /// Generates a shared key with the server private key and the given user's public key.
-    /// - Parameter keyPair: A type that stores the id of where the server private key is stored and a data representation of the client public key
-    /// - Returns: Returns a symmetric key representation of the shared key calculated between client public key and server private key.
-    private func makeSharedKey(with keyPair: ECKeyPair) async throws -> SymmetricKey {
-        let serverPrivateKey = await SecureKeysCache.shared[keyPair.privateKeyID]
-        
-        guard let serverPrivateKey else { throw Abort(.unauthorized) }
-        
-        let clientPublicKey = try PublicKey(rawRepresentation: keyPair.publicKey)
-        
-        return try await CryptographyHandler.generateSharedKey(with: clientPublicKey, and: serverPrivateKey)
     }
 }
