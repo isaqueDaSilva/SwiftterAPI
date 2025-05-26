@@ -52,7 +52,12 @@ struct Payload: Content, Authenticatable, JWTPayload {
             TimeLimit.sevenDays.rawValue
         }
         
-        self.jwtID = .init(value: UUID().uuidString)
+        
+        let randomNumberInString = "\(Int.random(in: .min ... .max))"
+        
+        let tokenID = userSlug + randomNumberInString + issuedAt.ISO8601Format()
+        
+        self.jwtID = .init(value: tokenID)
         self.userSlug = userSlug
         self.issuer = try .init(value: EnvironmentValues.swiftterJWTISSUER())
         self.subject = .init(value: userID.uuidString)
