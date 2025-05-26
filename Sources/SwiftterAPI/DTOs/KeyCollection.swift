@@ -8,6 +8,8 @@
 import Vapor
 
 struct KeyCollection: Content {
-    let keyPairForPassword: ECKeyPair
-    let publicKeyForToken: Data
+    static let storageKey = "PUBLIC_KEY"
+    
+    let keyPairForDecryption: ECKeyPair
+    let publicKeyForEncryption: Data
 }
