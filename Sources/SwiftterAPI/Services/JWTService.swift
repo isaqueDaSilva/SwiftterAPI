@@ -107,10 +107,37 @@ enum JWTService {
             .first() == nil
     }
     
+    /// Disable the token, by adding your representation on database.
+    /// - Parameters:
+    ///   - tokenID: The identifier of the token, stored at the `jit` claim.
+    ///   - tokenValue: The raw base64 value of the token.
+    ///   - database:The database client representation to mediates the communication between the API and the Database system.
     static func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
         try await DisabledToken(tokenID: tokenID, tokenValue: tokenValue).create(on: database)
     }
     
+    /// Checks if the subject and the userSlug claims, stored at the payload, are valid.
+    /// - Parameters:
+    ///   - userID: The id of the user, stored at the `subject`claim of the payload.
+    ///   - userSlug: The slug of the user.
+    ///   - database: The database client representation to mediates the communication between the API and the Database system.
+    static func verifyUserInformationsOnPayload(
+        _ userID: UUID,
+        userSlug: String,
+        on database: any Database
+    ) async throws {
+        guard let user = try await UserService.getUser(by: userID, at: database),
+              try user.profile?.requireID() == userSlug
+        else {
+            throw Abort(.unauthorized)
+        }
+    }
+    
+    /// Checks the subject and the userSlug claims, from both access and refresh tokens.
+    /// - Parameters:
+    ///   - accessTokenPayload: The payload of the access token.
+    ///   - refreshTokenPayload: The payload of the refresh token.
+    ///   - database: The database client representation to mediates the communication between the API and the Database system.
     static func verifyClaimsAtPairOf(
         accessTokenPayload: Payload,
         refreshTokenPayload: Payload,
@@ -122,11 +149,10 @@ enum JWTService {
             throw Abort(.unauthorized)
         }
         
-        guard let userID = UUID(refreshTokenPayload.subject.value),
-              let user = try await UserService.getUser(by: userID, at: database),
-              try user.profile?.requireID() == refreshTokenPayload.userSlug
-        else {
+        guard let userID = UUID(uuidString: refreshTokenPayload.subject.value) else {
             throw Abort(.unauthorized)
         }
+        
+        try await Self.verifyUserInformationsOnPayload(userID, userSlug: refreshTokenPayload.userSlug, on: database)
     }
 }
