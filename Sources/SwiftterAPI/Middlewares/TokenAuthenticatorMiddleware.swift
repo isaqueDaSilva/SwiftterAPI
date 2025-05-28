@@ -7,7 +7,7 @@
 
 import Vapor
 
-struct TokenCheckerMiddleware: AsyncBearerAuthenticator {
+struct TokenAuthenticatorMiddleware: AsyncBearerAuthenticator {
     func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
         let token = bearer.token
         let payload = try await request.jwt.verify(token, as: Payload.self)

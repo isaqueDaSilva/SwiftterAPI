@@ -112,8 +112,39 @@ enum JWTService {
     ///   - tokenID: The identifier of the token, stored at the `jit` claim.
     ///   - tokenValue: The raw base64 value of the token.
     ///   - database:The database client representation to mediates the communication between the API and the Database system.
-    static func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
+    static private func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
         try await DisabledToken(tokenID: tokenID, tokenValue: tokenValue).create(on: database)
+    }
+    
+    static func disableTokens(
+        accessTokenID: String,
+        refreshTokenID: String,
+        accessTokenValue: String,
+        refreshTokenValue: String,
+        on database: any Database
+    ) async throws {
+        try await withThrowingTaskGroup { group in
+            _ = group.addTaskUnlessCancelled {
+                try await Self.disableToken(
+                    with: accessTokenID,
+                    tokenValue: accessTokenValue,
+                    on: database
+                )
+            }
+            
+            _ = group.addTaskUnlessCancelled {
+                try await Self.disableToken(
+                    with: refreshTokenID,
+                    tokenValue: refreshTokenValue,
+                    on: database
+                )
+            }
+            
+            guard try await group.next() != nil else {
+                group.cancelAll()
+                return
+            }
+        }
     }
     
     /// Checks if the subject and the userSlug claims, stored at the payload, are valid.
@@ -154,5 +185,15 @@ enum JWTService {
         }
         
         try await Self.verifyUserInformationsOnPayload(userID, userSlug: refreshTokenPayload.userSlug, on: database)
+    }
+    
+    
+    /// Decodes the payload of the given token.
+    /// - Parameter token: A data representtaion of the token.
+    /// - Returns: Returns the payload contained at the token.
+    static func getPayload(on token: Data) throws -> Payload {
+        let (_, payload, _) = try DefaultJWTParser().parse(token, as: Payload.self)
+        
+        return payload
     }
 }
