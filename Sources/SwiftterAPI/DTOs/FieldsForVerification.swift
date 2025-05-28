@@ -7,7 +7,9 @@
 
 import Vapor
 
-struct FieldsForVerification: Content {
+struct FieldsForTokenRefresh: Content {
+    static let storageKey = "PUBLIC_KEY"
+    
     let accessToken: String
     let refreshToken: String
     let publicKeyForEncryption: Data
