@@ -18,7 +18,7 @@ struct AuthController: RouteCollection, ProtectedRouteProtocol {
         authRoute.post("signup") { try await self.signUp(with: $0) }
         userProtectedRoute.post("signin") { try await self.signIn(with: $0) }
         refreshTokenBasedRoute.put("refresh-token") { try await self.refreshToken(with: $0) }
-        tokenProtectedRoute.delete("signout") { _ in "Hello" }
+        tokenProtectedRoute.delete("signout") { try await self.signOut(with: $0) }
     }
 }
 
