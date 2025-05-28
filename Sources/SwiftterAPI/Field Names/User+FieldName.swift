@@ -15,6 +15,7 @@ extension User {
         case email = "email"
         case passwordHash = "password_hash"
         case createdAt = "created_at"
+        case isLogged = "ïs_logged"
         
         var key: FieldKey {
             .init(stringLiteral: self.rawValue)
