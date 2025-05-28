@@ -40,6 +40,10 @@ final class User: Model, @unchecked Sendable {
     @Field(key: FieldName.createdAt.key)
     var createdAt: Date?
     
+    /// Indicates if the user is current logged or not.
+    @Field(key: FieldName.isLogged.key)
+    var isLogged: Bool
+    
     /// The profile of the user.
     ///
     /// >Note: Although it is noted as optional child, the user profile persists as long as the user exists.
@@ -59,7 +63,16 @@ final class User: Model, @unchecked Sendable {
         self.passwordHash = passwordHash
         self.birthDate = dto.birthDate
         self.createdAt = .now
+        self.isLogged = true
     }
 }
 
-extension User: Authenticatable { }
+extension User: Authenticatable {
+    func updateLoggedStatus(with isLogged: Bool, on database: any Database) async throws {
+        guard isLogged != self.isLogged else { return }
+        
+        self.isLogged = isLogged
+        
+        try await self.update(on: database)
+    }
+}
