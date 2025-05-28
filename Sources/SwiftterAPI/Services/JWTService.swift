@@ -112,7 +112,7 @@ enum JWTService {
     ///   - tokenID: The identifier of the token, stored at the `jit` claim.
     ///   - tokenValue: The raw base64 value of the token.
     ///   - database:The database client representation to mediates the communication between the API and the Database system.
-    static private func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
+    static func disableToken(with tokenID: String, tokenValue: String, on database: any Database) async throws {
         try await DisabledToken(tokenID: tokenID, tokenValue: tokenValue).create(on: database)
     }
     
@@ -152,16 +152,18 @@ enum JWTService {
     ///   - userID: The id of the user, stored at the `subject`claim of the payload.
     ///   - userSlug: The slug of the user.
     ///   - database: The database client representation to mediates the communication between the API and the Database system.
-    static func verifyUserInformationsOnPayload(
+    static func isUserInformationsValid(
         _ userID: UUID,
         userSlug: String,
         on database: any Database
-    ) async throws {
+    ) async throws -> Bool {
         guard let user = try await UserService.getUser(by: userID, at: database),
               try user.profile?.requireID() == userSlug
         else {
-            throw Abort(.unauthorized)
+            return false
         }
+        
+        return true
     }
     
     /// Checks the subject and the userSlug claims, from both access and refresh tokens.
@@ -184,7 +186,7 @@ enum JWTService {
             throw Abort(.unauthorized)
         }
         
-        try await Self.verifyUserInformationsOnPayload(userID, userSlug: refreshTokenPayload.userSlug, on: database)
+        _ = try await Self.isUserInformationsValid(userID, userSlug: refreshTokenPayload.userSlug, on: database)
     }
     
     
@@ -196,4 +198,6 @@ enum JWTService {
         
         return payload
     }
+    
+    static func makeUnknownID() -> String { "unknown" + "\(Int.random(in: .min ... .max))" + Date().ISO8601Format() }
 }
