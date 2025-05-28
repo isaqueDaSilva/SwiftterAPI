@@ -10,18 +10,26 @@ import Vapor
 struct TokenAuthenticatorMiddleware: AsyncBearerAuthenticator {
     func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
         let token = bearer.token
-        let payload = try await request.jwt.verify(token, as: Payload.self)
         
-        guard try await JWTService.isTokenValid(by: payload.jwtID.value, and: token, on: request.db) else {
+        let payload: Payload = if let decodedPayload = try? await request.jwt.verify(token, as: Payload.self) {
+            decodedPayload
+        } else {
+            try await JWTService.disableToken(
+                with: JWTService.makeUnknownID(),
+                tokenValue: token,
+                on: request.db
+            )
+            
+            throw Abort(.unauthorized)
+        }
+        
+        guard try await JWTService.isTokenValid(by: payload.jwtID.value, and: token, on: request.db),
+              let userID = UUID(uuidString: payload.subject.value),
+              try await JWTService.isUserInformationsValid(userID, userSlug: payload.userSlug, on: request.db)
+        else {
             try await JWTService.disableToken(with: payload.jwtID.value, tokenValue: token, on: request.db)
             throw Abort(.unauthorized)
         }
-        
-        guard let userID = UUID(uuidString: payload.subject.value) else {
-            throw Abort(.unauthorized)
-        }
-        
-        try await JWTService.verifyUserInformationsOnPayload(userID, userSlug: payload.userSlug, on: request.db)
         
         request.auth.login(payload)
     }
