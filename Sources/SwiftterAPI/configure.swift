@@ -13,6 +13,7 @@ public func configure(_ app: Application) async throws {
     DatabaseConfiguration.setMigrations(for: app)
 
     try await app.autoMigrate()
+    try await app.autoRevert()
 
     // MARK: JWT Configuration
     try await JWTConfiguration.setJWT(for: app)
