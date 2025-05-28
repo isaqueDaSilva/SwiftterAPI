@@ -7,6 +7,7 @@
 
 import Fluent
 import FluentPostgresDriver
+import Vapor
 
 extension User {
     struct Migration: AsyncMigration {
@@ -58,6 +59,12 @@ extension User {
                     FieldName.createdAt.key,
                     .date,
                     .required
+                )
+                .field(
+                    FieldName.isLogged.key,
+                    .bool,
+                    .required,
+                    .sql(.default(false))
                 )
                 .create()
         }
