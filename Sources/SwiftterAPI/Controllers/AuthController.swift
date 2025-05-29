@@ -73,12 +73,8 @@ extension AuthController {
             throw Abort(.internalServerError)
         }
         
-        guard let userID = UUID(uuidString: refreshTokenPayload.subject.value) else {
-            throw Abort(.unauthorized)
-        }
-        
         return try await JWTService.createPairOfJWT(
-            userID: userID,
+            userID: refreshTokenPayload.subject.value,
             userSlug: refreshTokenPayload.userSlug,
             clientPublicKeyData: clientPublicKeyData,
             request: request
@@ -88,51 +84,29 @@ extension AuthController {
     @Sendable
     private func signOut(with request: Request) async throws -> HTTPStatus {
         let accessTokenPayload = try request.auth.require(Payload.self)
+        let accessToken = request.headers.bearerAuthorization!.token
+        let refreshToken = request.headers.first(name: "X-Refresh-Token")
         
-        let accessToken: String = if let token = request.headers.bearerAuthorization?.token {
-            token
-        } else {
-            request.logger.error("No token is available at the bearer authorization header.")
-            throw Abort(.unauthorized)
-        }
-        
-        let refreshToken = if let token = request.headers.first(name: "X-Refresh-Token") {
-            token
-        } else {
-            request.logger.error("No token is available at the custom `X-Refresh-Token` header.")
-            throw Abort(.unauthorized)
-        }
-        
-        let refreshTokenPayload: Payload = if let payload = try? JWTService.getPayload(on: refreshToken.toData()) {
-            payload
-        } else {
-            try await JWTService.disableTokens(
-                accessTokenID: accessTokenPayload.jwtID.value,
-                refreshTokenID: JWTService.makeUnknownID(),
-                accessTokenValue: accessToken,
-                refreshTokenValue: refreshToken,
-                on: request.db
+        guard let refreshToken else {
+            try await UserService.revokeUserAccess(
+                for: accessTokenPayload.subject.value,
+                tokens: [accessToken: accessTokenPayload],
+                at: request.db
             )
             
-            throw Abort(.unauthorized)
+            return .ok
         }
         
-        try await JWTService.disableTokens(
-            accessTokenID: accessTokenPayload.jwtID.value,
-            refreshTokenID: refreshTokenPayload.jwtID.value,
-            accessTokenValue: accessToken,
-            refreshTokenValue: refreshToken,
-            on: request.db
+        let refreshTokenPayload = try await request.jwt.verify(refreshToken, as: Payload.self)
+        
+        try await UserService.revokeUserAccess(
+            for: accessTokenPayload.subject.value,
+            tokens: [
+                accessToken: accessTokenPayload,
+                refreshToken: refreshTokenPayload
+            ],
+            at: request.db
         )
-        
-        guard let userID = UUID(accessTokenPayload.subject.value),
-              let user = try await User.find(userID, on: request.db)
-        else {
-            request.logger.error("The user cannot be founded.")
-            throw Abort(.unauthorized)
-        }
-        
-        try await user.updateLoggedStatus(with: false, on: request.db)
         
         return .ok
     }
