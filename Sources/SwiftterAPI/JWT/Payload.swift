@@ -40,7 +40,7 @@ struct Payload: Content, Authenticatable, JWTPayload {
     /// Indicates when this token will be expire.
     let expiration: ExpirationClaim
     
-    init(with userID: UUID, userSlug: String, audienceType: AudienceType) throws {
+    init(with userID: String, userSlug: String, audienceType: AudienceType) throws {
         let issuedAt = Date()
         
         let expirationTime: TimeInterval = switch audienceType {
@@ -60,7 +60,7 @@ struct Payload: Content, Authenticatable, JWTPayload {
         self.jwtID = .init(value: tokenID)
         self.userSlug = userSlug
         self.issuer = try .init(value: EnvironmentValues.swiftterJWTISSUER())
-        self.subject = .init(value: userID.uuidString)
+        self.subject = .init(value: userID)
         self.audience = try audienceType.makeAudience()
         self.issuedAt = .init(value: issuedAt)
         self.expiration = .init(value: issuedAt.addingTimeInterval(expirationTime))
@@ -146,3 +146,11 @@ extension Payload {
         try self.audience.verifyIntendedAudience(includes: audience)
     }
 }
+
+//extension SubjectClaim {
+//    func toUUID() throws -> UUID {
+//        guard let uuid = UUID(uuidString: self.value) else {
+//            throw S
+//        }
+//    }
+//}
