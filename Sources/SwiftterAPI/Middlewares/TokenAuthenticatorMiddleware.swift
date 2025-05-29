@@ -24,8 +24,11 @@ struct TokenAuthenticatorMiddleware: AsyncBearerAuthenticator {
         }
         
         guard try await JWTService.isTokenValid(by: payload.jwtID.value, and: token, on: request.db),
-              let userID = UUID(uuidString: payload.subject.value),
-              try await JWTService.isUserInformationsValid(userID, userSlug: payload.userSlug, on: request.db)
+              try await UserService.isUserInformationsValid(
+                payload.subject.value,
+                userSlug: payload.userSlug,
+                on: request.db
+              )
         else {
             try await JWTService.disableToken(with: payload.jwtID.value, tokenValue: token, on: request.db)
             throw Abort(.unauthorized)
