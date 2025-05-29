@@ -14,7 +14,7 @@ final class User: Model, @unchecked Sendable {
     
     /// An unique UUID that identifies an user on database table.
     @ID(custom: FieldName.id.key, generatedBy: .user)
-    var id: UUID?
+    var id: String?
     
     /// The actual name of an user.
     @Field(key: FieldName.name.key)
@@ -57,7 +57,7 @@ final class User: Model, @unchecked Sendable {
         from dto: CreateUserRequest,
         passwordHash: String
     ) {
-        self.id = .init()
+        self.id = UUID().uuidString
         self.name = dto.name
         self.email = dto.email.lowercased()
         self.passwordHash = passwordHash

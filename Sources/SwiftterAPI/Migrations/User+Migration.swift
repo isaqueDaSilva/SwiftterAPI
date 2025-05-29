@@ -17,8 +17,9 @@ extension User {
             try await database.schema(schemaName)
                 .field(
                     FieldName.id.key,
-                    .uuid,
-                    .identifier(auto: false)
+                    .string,
+                    .identifier(auto: false),
+                    .sql(.unique)
                 )
                 .field(
                     FieldName.name.key,
