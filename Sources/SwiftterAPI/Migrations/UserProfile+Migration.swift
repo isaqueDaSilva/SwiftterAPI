@@ -23,7 +23,7 @@ extension UserProfile {
                 )
                 .field(
                     FieldName.userID.key,
-                    .uuid,
+                    .string,
                     .references(
                         userSchema,
                         "id",
