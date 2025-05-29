@@ -22,7 +22,7 @@ struct SignInAndSignUpResponse: Content {
 
 extension SignInAndSignUpResponse {
     static func build(
-        with userID: UUID,
+        with userID: String,
         userProfile: UserProfile,
         clientPublicKey: Data,
         and request: Request
