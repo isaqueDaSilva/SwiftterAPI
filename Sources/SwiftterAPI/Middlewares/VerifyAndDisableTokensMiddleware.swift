@@ -19,13 +19,11 @@ struct VerifyAndDisableTokensMiddleware: AsyncMiddleware {
             in: request
         )
         
-        do {
-            try await JWTService.verifyClaimsAtPairOf(
-                accessTokenPayload: accessPayload,
-                refreshTokenPayload: refreshPayload,
-                at: request.db
-            )
-        } catch {
+        guard try await JWTService.verifyClaimsAtPairOf(
+            accessTokenPayload: accessPayload,
+            refreshTokenPayload: refreshPayload,
+            at: request.db
+        ) else {
             try await JWTService.disableTokens(
                 accessTokenID: accessPayload.jwtID.value,
                 refreshTokenID: refreshPayload.jwtID.value,
