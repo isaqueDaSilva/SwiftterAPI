@@ -19,7 +19,7 @@ struct AuthenticatorMiddleware: AsyncBasicAuthenticator {
         
         guard let decryptedPassword else { throw Abort(.unauthorized, reason: "Password is required.") }
         
-        let user = try await UserService.getUser(by: basic.username, at: request.db)
+        let user = try await UserService.getUser(byEmail: basic.username, at: request.db)
         
         guard try Bcrypt.verify(decryptedPassword, created: user.passwordHash), !user.isLogged else {
             throw Abort(.unauthorized)
