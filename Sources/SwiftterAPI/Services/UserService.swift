@@ -43,6 +43,7 @@ enum UserService {
             .with(\.$profile)
             .field(\.$email)
             .field(\.$passwordHash)
+            .field(\.$isLogged)
             .first()
         
         guard let user else {
