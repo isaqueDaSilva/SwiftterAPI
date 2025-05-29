@@ -20,7 +20,7 @@ enum JWTService {
     /// and another for a encrypted representation of the refresh token, along side of the server public key,
     /// used to encrypt the refresh token.
     static func createPairOfJWT(
-        userID: UUID,
+        userID: String,
         userSlug: String,
         clientPublicKeyData: Data,
         request: Request
@@ -50,7 +50,7 @@ enum JWTService {
     ///   - request: The main request object that is responsible to perform the operation.
     /// - Returns: Returns a base64 string representation of the access and refresh tokens.
     static private func createTokens(
-        with userID: UUID,
+        with userID: String,
         userSlug: String,
         serverPrivateKey: PrivateKey,
         clientPublicKey: PublicKey,
@@ -147,25 +147,6 @@ enum JWTService {
         }
     }
     
-    /// Checks if the subject and the userSlug claims, stored at the payload, are valid.
-    /// - Parameters:
-    ///   - userID: The id of the user, stored at the `subject`claim of the payload.
-    ///   - userSlug: The slug of the user.
-    ///   - database: The database client representation to mediates the communication between the API and the Database system.
-    static func isUserInformationsValid(
-        _ userID: UUID,
-        userSlug: String,
-        on database: any Database
-    ) async throws -> Bool {
-        guard let user = try await UserService.getUser(by: userID, at: database),
-              try user.profile?.requireID() == userSlug
-        else {
-            return false
-        }
-        
-        return true
-    }
-    
     /// Checks the subject and the userSlug claims, from both access and refresh tokens.
     /// - Parameters:
     ///   - accessTokenPayload: The payload of the access token.
@@ -175,18 +156,18 @@ enum JWTService {
         accessTokenPayload: Payload,
         refreshTokenPayload: Payload,
         at database: any Database
-    ) async throws {
+    ) async throws -> Bool {
         guard accessTokenPayload.subject.value == refreshTokenPayload.subject.value,
               accessTokenPayload.userSlug == refreshTokenPayload.userSlug
         else {
-            throw Abort(.unauthorized)
+            return false
         }
         
-        guard let userID = UUID(uuidString: refreshTokenPayload.subject.value) else {
-            throw Abort(.unauthorized)
-        }
-        
-        _ = try await Self.isUserInformationsValid(userID, userSlug: refreshTokenPayload.userSlug, on: database)
+        return try await UserService.isUserInformationsValid(
+            refreshTokenPayload.subject.value,
+            userSlug: refreshTokenPayload.userSlug,
+            on: database
+        )
     }
     
     
