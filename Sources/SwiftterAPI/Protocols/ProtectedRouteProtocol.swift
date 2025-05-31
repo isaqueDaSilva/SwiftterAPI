@@ -15,15 +15,19 @@ protocol ProtectedRouteProtocol {
 extension ProtectedRouteProtocol {
     func userProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder {
         let userAuthenticator = AuthenticatorMiddleware()
-        let userGuardMiddleware = User.guardMiddleware()
+        let userGuardMiddleware = User.guardMiddleware(
+            throwing: Abort(.unauthorized, reason: "User not authenticated")
+        )
         
-        return routes.grouped(userAuthenticator, userGuardMiddleware)
+        return routes.grouped(userAuthenticator).grouped(userGuardMiddleware)
     }
     
     func tokenProtectedRoute(with routes: any RoutesBuilder) -> any RoutesBuilder {
         let tokenAuthenticator = TokenAuthenticatorMiddleware()
-        let tokenGuardMiddleware = Payload.guardMiddleware()
+        let tokenGuardMiddleware = Payload.guardMiddleware(
+            throwing: Abort(.unauthorized, reason: "Token not authenticated")
+        )
         
-        return routes.grouped(tokenAuthenticator, tokenGuardMiddleware)
+        return routes.grouped(tokenAuthenticator).grouped(tokenGuardMiddleware)
     }
 }
