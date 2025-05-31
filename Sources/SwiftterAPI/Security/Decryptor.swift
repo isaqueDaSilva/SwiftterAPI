@@ -18,8 +18,6 @@ enum Decryptor {
             throw Abort(.internalServerError, reason: "No Server's private key available.")
         }
         
-        await SecureKeysCache.shared.remove(for: keyPair.privateKeyID)
-        
         let clientPublicKey = try PublicKey(rawRepresentation: keyPair.publicKey)
         
         let sharedKey = try await CryptographyHandler.generateSharedKey(

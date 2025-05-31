@@ -29,7 +29,15 @@ final actor SecureKeysCache {
     /// - Parameter id: The id of the key that will be removed.
     func remove(for id: UUID) { privateKeys[id] = nil }
     
-    subscript(_ id: UUID) -> PrivateKey? { privateKeys[id] }
+    subscript(_ id: UUID) -> PrivateKey? {
+        let key = privateKeys[id]
+        
+        if key != nil {
+            self.remove(for: id)
+        }
+        
+        return key
+    }
     
     private init() { }
 }
