@@ -39,7 +39,7 @@ enum JWTService {
         return .init(
             accessToken: accessToken,
             refreshToken: refreshToken,
-            publicKey: serverPrivateKey.rawRepresentation
+            publicKey: serverPrivateKey.publicKey.rawRepresentation
         )
     }
     
