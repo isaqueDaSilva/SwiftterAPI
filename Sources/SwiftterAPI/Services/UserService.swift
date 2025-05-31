@@ -41,9 +41,6 @@ enum UserService {
         let user = try await User.query(on: database)
             .filter(\.$email, .equal, email)
             .with(\.$profile)
-            .field(\.$email)
-            .field(\.$passwordHash)
-            .field(\.$isLogged)
             .first()
         
         guard let user else {
