@@ -146,11 +146,3 @@ extension Payload {
         try self.audience.verifyIntendedAudience(includes: audience)
     }
 }
-
-//extension SubjectClaim {
-//    func toUUID() throws -> UUID {
-//        guard let uuid = UUID(uuidString: self.value) else {
-//            throw S
-//        }
-//    }
-//}

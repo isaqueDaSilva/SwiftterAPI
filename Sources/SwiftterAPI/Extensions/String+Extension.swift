@@ -42,9 +42,7 @@ extension String {
     /// Transform a base64 string representation into a binary data type.
     /// - Returns: Returns a binary data representation of the given base64 string.
     func toData() throws -> Data {
-        let string = Data(base64Encoded: self)
-        
-        guard let data = string else {
+        guard let data = self.data(using: .utf8) else {
             throw Abort(.notAcceptable)
         }
         
