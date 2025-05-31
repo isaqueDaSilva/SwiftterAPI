@@ -68,10 +68,13 @@ extension AuthController {
     @Sendable
     private func refreshToken(with request: Request) async throws -> TokenPair {
         let refreshTokenPayload = try request.auth.require(Payload.self)
+        let storageKey = FieldsForTokenRefresh.storageKey
         
-        guard let clientPublicKeyData = try await request.cache.get(FieldsForTokenRefresh.storageKey, as: Data.self) else {
+        guard let clientPublicKeyData = try await request.cache.get(storageKey, as: Data.self) else {
             throw Abort(.internalServerError)
         }
+        
+        try await request.cache.delete(storageKey)
         
         return try await JWTService.createPairOfJWT(
             userID: refreshTokenPayload.subject.value,
@@ -85,7 +88,7 @@ extension AuthController {
     private func signOut(with request: Request) async throws -> HTTPStatus {
         let accessTokenPayload = try request.auth.require(Payload.self)
         let accessToken = request.headers.bearerAuthorization!.token
-        let refreshToken = request.headers.first(name: "X-Refresh-Token")
+        let refreshToken = request.headers.refreshToken
         
         guard let refreshToken else {
             try await UserService.revokeUserAccess(
