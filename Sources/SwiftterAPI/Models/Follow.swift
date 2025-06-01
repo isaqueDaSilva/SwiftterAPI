@@ -1,3 +1,13 @@
+//
+//  Follow.swift
+//  SwiftterAPI
+//
+//  Created by Isaque da Silva on 5/31/25.
+//
+
+import Fluent
+import Vapor
+
 /// A representation table on database, that describe a relation between two user, known as follow action.
 ///
 /// This action consists of a random user, known as a follower, finding a profile, random or not,
@@ -6,8 +16,8 @@ final class Follow: Model, @unchecked Sendable {
     static let schema = "follow"
     
     /// An unique identifier that identifies the follow action.
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: FieldName.id.key, generatedBy: .user)
+    var id: String?
     
     ///Indicates who's the user that started the relashionsip(follow action) between them.
     @Parent(key: FieldName.follower.key)
@@ -18,17 +28,17 @@ final class Follow: Model, @unchecked Sendable {
     var following: UserProfile
     
     /// Indicates when occurred the action.
-    @Timestamp(key: FieldName.followedAt.key, on: .create)
+    @Field(key: FieldName.followedAt.key)
     var followedAt: Date?
     
     init() { }
     
     init(
-        user: UserProfile.IDValue,
+        follower: UserProfile.IDValue,
         following: UserProfile.IDValue
     ) {
-        self.id = nil
-        self.$follower.id = user
+        self.id = follower + "-" + following + "-" + Date().ISO8601Format()
+        self.$follower.id = follower
         self.$following.id = following
         self.followedAt = .now
     }
