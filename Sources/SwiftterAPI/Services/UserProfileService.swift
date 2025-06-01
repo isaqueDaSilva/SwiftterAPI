@@ -21,4 +21,18 @@ enum UserProfileService {
         
         return newProfile
     }
+    
+    static func getProfile(by slug: String, on database: any Database) async throws -> UserProfile {
+        let profile = try await UserProfile.find(slug, on: database)
+        
+        guard let profile else { throw Abort(.notFound, reason: "Profile doesn't exist.") }
+        
+        return profile
+    }
+    
+    static func getPossibleProfile(by slug: String, request: Request) async throws -> Page<ProfilePreview> {
+        let profiles = try await UserProfile.query(on: request.db).filter(\.$id =~ slug).paginate(for: request)
+        
+        return try .init(items: profiles.items.toPreview(), metadata: profiles.metadata)
+    }
 }
