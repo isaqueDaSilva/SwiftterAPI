@@ -22,13 +22,15 @@ final class UserProfile: Model, @unchecked Sendable {
     
     ///The user's profile picture name representation.
     ///
-    /// This name representation is used to precompute an URL and fetch the user's profile image and display for him or anyone that access his profile.
+    /// This name representation is used to precompute an URL
+    /// and fetch the user's profile image and display for him or anyone that access his profile.
     @Field(key: FieldName.profilePictureName.key)
     var profilePictureName: String
     
     /// The cover image name of the user's profile.
     ///
-    /// This name representation is used to precompute an URL and fetch the user's cover image and display for him or anyone that access his profile.
+    /// This name representation is used to precompute an URL
+    /// and fetch the user's cover image and display for him or anyone that access his profile.
     @Field(key: FieldName.coverImageName.key)
     var coverImageName: String
     
@@ -36,13 +38,22 @@ final class UserProfile: Model, @unchecked Sendable {
     @OptionalField(key: FieldName.bio.key)
     var bio: String?
     
-    /// The optional link that the user can insert to says for anyone that is visiting him, other ways to find him (e.g. GitHub profile, Instagram and more).
+    /// The optional link that the user can insert to says for anyone that is visiting him,
+    /// other ways to find him (e.g. GitHub profile, Instagram and more).
     @OptionalField(key: FieldName.link.key)
     var link: String?
+    
+    /// Stores the full representation of `followers` relashionship.
+    @Siblings(through: Follow.self, from: \.$following, to: \.$follower)
+    var followers: [UserProfile]
     
     /// Stores the total quantity of followers this profile has.
     @Field(key: FieldName.followersCount.key)
     var followersCount: Int
+    
+    /// Stores the full representation of the `following` relationship.
+    @Siblings(through: Follow.self, from: \.$follower, to: \.$following)
+    var following: [UserProfile]
     
     /// Stores the total count of followings that this profile has.
     @Field(key: FieldName.followingCount.key)
@@ -94,5 +105,33 @@ extension UserProfile: Convertable {
             swifeetCount: self.swifeetCount,
             createdAt: self.createdAt
         )
+    }
+}
+
+extension UserProfile {
+    func updateFollowersCount(with type: UpdateType, at database: any Database) async throws {
+        switch type {
+        case .increment:
+            self.followersCount += 1
+        case .decrement:
+            guard followersCount > 0 else { return }
+            
+            self.followersCount -= 1
+        }
+        
+        try await self.update(on: database)
+    }
+    
+    func updateFollowingCount(with type: UpdateType, at database: any Database) async throws {
+        switch type {
+        case .increment:
+            self.followingCount += 1
+        case .decrement:
+            guard followersCount > 0 else { return }
+            
+            self.followingCount -= 1
+        }
+        
+        try await self.update(on: database)
     }
 }
