@@ -12,9 +12,7 @@ enum UserService {
     /// Creates a new user at the database.
     /// - Parameter request: The main request object that is responsible to perform the operation.
     /// - Returns: Returns an instance of the generated user.
-    static func create(with createUserDTO: CreateUserRequest, request: Request) async throws -> User {
-        try CreateUserRequest.validate(content: request)
-        
+    static func create(with createUserDTO: CreateUserRequest, at database: any Database) async throws -> User {
         let password = try await Decryptor.decryptField(
             createUserDTO.password,
             with: createUserDTO.keyCollection.keyPairForDecryption
@@ -27,7 +25,7 @@ enum UserService {
         let passwordHash = try Bcrypt.hash(password)
         
         let newUser = User(from: createUserDTO, passwordHash: passwordHash)
-        try await newUser.create(on: request.db)
+        try await newUser.create(on: database)
         
         return newUser
     }
