@@ -60,6 +60,22 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         
         return try .init(items: follow.items.toPreview(), metadata: follow.metadata)
     }
+    
+    private func updateProfile(with request: Request) async throws -> Profile {
+        let payload = try request.auth.require(Payload.self)
+        let updateProfileDTO = try request.content.decode(UpdateProfile.self)
+        
+        try UpdateProfile.validate(content: request)
+        
+        let updatedProfile: Profile = try await request.db.transaction { database in
+            let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: database)
+            let updatedProfile = try await profile.updateFields(with: updateProfileDTO, at: database)
+            
+            return try updatedProfile.toDTO()
+        }
+        
+        return updatedProfile
+    }
 }
 
 extension ProfileController {
