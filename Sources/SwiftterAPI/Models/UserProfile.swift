@@ -134,4 +134,18 @@ extension UserProfile {
         
         try await self.update(on: database)
     }
+    
+    func updateFields(with dto: UpdateProfile, at database: any Database) async throws -> UserProfile {
+        if let bio = dto.bio, self.bio != bio {
+            self.bio = bio
+        }
+        
+        if let link = dto.link, self.link != link {
+            self.link = link
+        }
+        
+        try await self.update(on: database)
+        
+        return self
+    }
 }
