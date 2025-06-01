@@ -27,18 +27,24 @@ extension AuthController {
     private func signUp(with request: Request) async throws -> SignUpResponse {
         let createUserRequestDTO = try request.content.decode(CreateUserRequest.self)
         
-        let newUser = try await UserService.create(with: createUserRequestDTO, request: request)
-        let userSlug = try await SlugGenerator.generate(for: newUser.name, with: request.db)
-        let newUserProfile = try await UserProfileService.create(
-            with: userSlug,
-            userID: newUser.requireID(),
-            at: request.db
-        )
+        try CreateUserRequest.validate(content: request)
+        
+        let (userID, newUserProfile): (String, UserProfile) = try await request.db.transaction { database in
+            let newUser = try await UserService.create(with: createUserRequestDTO, at: database)
+            let userSlug = try await SlugGenerator.generate(for: newUser.name, with: database)
+            let newUserProfile = try await UserProfileService.create(
+                with: userSlug,
+                userID: newUser.requireID(),
+                at: database
+            )
+            
+            return (try newUser.requireID(), newUserProfile)
+        }
         
         let clientPublicKey = createUserRequestDTO.keyCollection.publicKeyForEncryption
         
         return try await .build(
-            with: newUser.requireID(),
+            with: userID,
             userProfile: newUserProfile,
             clientPublicKey: clientPublicKey,
             and: request
