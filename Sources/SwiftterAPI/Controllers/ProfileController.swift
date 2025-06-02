@@ -28,6 +28,18 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         }
         
         tokenProtectedRoute.patch("update") { try await self.updateProfile(with: $0) }
+        
+        tokenProtectedRoute.on(.PATCH, "update", "profile-picture", body: .collect(maxSize: "1mb")) {
+            try await self.updateImage(with: $0, and: .profile)
+        }
+        
+        tokenProtectedRoute.on(.PATCH, "update", "cover-image", body: .collect(maxSize: "1mb")) {
+            try await self.updateImage(with: $0, and: .cover)
+        }
+        
+        tokenProtectedRoute.delete("delete", "profile-picture") { try await self.deleteImage(with: $0, and: .profile) }
+        
+        tokenProtectedRoute.delete("delete", "cover-picture") { try await self.deleteImage(with: $0, and: .cover) }
     }
     
     @Sendable
@@ -81,6 +93,77 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         }
         
         return updatedProfile
+    }
+    
+    @Sendable
+    private func updateImage(with request: Request, and type: UserProfile.PictureField) async throws -> String {
+        let payload = try request.auth.require(Payload.self)
+        let pictureData = try request.content.decode(Picture.self).data
+        let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: request.db)
+        
+        let pictureName: String = switch type {
+        case .profile:
+            profile.profilePictureName
+        case .cover:
+            profile.coverImageName
+        }
+        
+        switch pictureName {
+        case UserProfile.defaultImageName:
+            let pictureName = payload.userSlug + "\(Int.random(in: .min ... .max))" + Date().ISO8601Format()
+            
+            let fullPath: String = switch type {
+            case .profile:
+                try EnvironmentValues.swifeetPicturePath(with: pictureName)
+            case .cover:
+                try EnvironmentValues.swifeetPicturePath(with: pictureName)
+            }
+            
+            try await FileSystemHandler.write(.init(data: pictureData), at: fullPath)
+            try await profile.updatePicturesName(with: pictureName, for: type, at: request.db)
+            
+            return pictureName
+        default:
+            let fullPath: String = switch type {
+            case .profile:
+                try EnvironmentValues.swifeetPicturePath(with: pictureName)
+            case .cover:
+                try EnvironmentValues.swifeetPicturePath(with: pictureName)
+            }
+            
+            try await FileSystemHandler.write(.init(data: pictureData), at: fullPath)
+            try await profile.updatePicturesName(with: pictureName, for: type, at: request.db)
+            
+            return pictureName
+        }
+    }
+    
+    @Sendable
+    private func deleteImage(with request: Request, and type: UserProfile.PictureField) async throws -> HTTPStatus {
+        let payload = try request.auth.require(Payload.self)
+        let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: request.db)
+        
+        let pictureName: String = switch type {
+        case .profile:
+            profile.profilePictureName
+        case .cover:
+            profile.coverImageName
+        }
+        
+        let fullPath: String = switch type {
+        case .profile:
+            try EnvironmentValues.swifeetPicturePath(with: pictureName)
+        case .cover:
+            try EnvironmentValues.swifeetPicturePath(with: pictureName)
+        }
+        
+        guard try await FileSystemHandler.delete(at: fullPath) else {
+            throw Abort(.badRequest, reason: "Failed to delete the image.")
+        }
+        
+        try await profile.updatePicturesName(with: UserProfile.defaultImageName, for: type, at: request.db)
+        
+        return .ok
     }
 }
 
