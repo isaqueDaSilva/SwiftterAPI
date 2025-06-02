@@ -56,4 +56,28 @@ enum EnvironmentValues {
         
         return jwtSecret
     }
+    
+    static func profilePicturePath(with pictureName: String) throws -> String {
+        guard let profilePictureFolder = Environment.get("PROFILE_PICTURE_FOLDER") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return profilePictureFolder + "/" + pictureName
+    }
+    
+    static func coverPicturePath(with pictureName: String) throws -> String {
+        guard let profilePictureFolder = Environment.get("COVER_PICTURE_FOLDER") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return profilePictureFolder + "/" + pictureName
+    }
+    
+    static func swifeetPicturePath(with pictureName: String) throws -> String {
+        guard let profilePictureFolder = Environment.get("SWIFEET_PICTURE_FOLDER") else {
+            throw Abort(.internalServerError)
+        }
+        
+        return profilePictureFolder + "/" + pictureName
+    }
 }
