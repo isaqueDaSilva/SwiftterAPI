@@ -18,6 +18,7 @@ struct HelperController: RouteCollection, ProtectedRouteProtocol {
         tokenProtectedRoute.patch("follow", .parameter(self.slugParameterKey)) { try await self.follow(with: $0) }
     }
     
+    @Sendable
     private func follow(with request: Request) async throws -> HTTPStatus {
         let payload = try request.auth.require(Payload.self)
         let followingUserSlug = try request.parameters.require(self.slugParameterKey)

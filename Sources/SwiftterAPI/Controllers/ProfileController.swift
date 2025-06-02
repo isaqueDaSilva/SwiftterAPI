@@ -26,8 +26,11 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         tokenProtectedRoute.get("following", .parameter(self.slugParameterKey)) {
             try await self.getFollow(with: $0, and: .following)
         }
+        
+        tokenProtectedRoute.patch("update") { try await self.updateProfile(with: $0) }
     }
     
+    @Sendable
     private func getProfile(with request: Request) async throws -> Profile {
         guard request.auth.has(Payload.self) else { throw Abort(.unauthorized) }
         
@@ -36,6 +39,7 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         return try await UserProfileService.getProfile(by: profileSlug, on: request.db).toDTO()
     }
     
+    @Sendable
     private func searchProfile(with request: Request) async throws -> Page<ProfilePreview> {
         guard request.auth.has(Payload.self) else { throw Abort(.unauthorized) }
         
@@ -44,6 +48,7 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         return try await UserProfileService.getPossibleProfile(by: profileSlug, request: request)
     }
     
+    @Sendable
     private func getFollow(with request: Request, and type: FollowType) async throws -> Page<ProfilePreview> {
         guard request.auth.has(Payload.self) else { throw Abort(.unauthorized) }
         
@@ -61,6 +66,7 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         return try .init(items: follow.items.toPreview(), metadata: follow.metadata)
     }
     
+    @Sendable
     private func updateProfile(with request: Request) async throws -> Profile {
         let payload = try request.auth.require(Payload.self)
         let updateProfileDTO = try request.content.decode(UpdateProfile.self)
