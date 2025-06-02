@@ -6,3 +6,6 @@ FULL_ACCESS_JWT_AUDIENCE=anything_to_identify_that_this_audience_grants_full_acc
 REFRESH_JWT_AUDIENCE=anything_to_identify_that_this_audience_grants_only_access_to_refresh_token
 ACCESS_TOKEN_SECRET=anything_to_signing_the_access_token
 REFRESH_TOKEN_SECRET=anything_to_signing_the_refresh_token
+PROFILE_PICTURE_FOLDER=/any/path/to/store/profile/images
+COVER_PICTURE_FOLDER=/any/path/to/store/cover/images
+SWIFEET_PICTURE_FOLDER=/any/path/to/store/swifeet /images
