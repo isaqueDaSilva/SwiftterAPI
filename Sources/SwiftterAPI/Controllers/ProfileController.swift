@@ -27,6 +27,10 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
             try await self.getFollow(with: $0, and: .following)
         }
         
+        tokenProtectedRoute.get("profile-picture") { try await self.getPicture(with: $0, and: .profile) }
+        
+        tokenProtectedRoute.get("cover-picture") { try await self.getPicture(with: $0, and: .cover) }
+        
         tokenProtectedRoute.patch("update") { try await self.updateProfile(with: $0) }
         
         tokenProtectedRoute.on(.PATCH, "update", "profile-picture", body: .collect(maxSize: "1mb")) {
@@ -136,6 +140,30 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
             
             return pictureName
         }
+    }
+    
+    @Sendable
+    private func getPicture(with request: Request, and type: UserProfile.PictureField) async throws -> Picture {
+        let payload = try request.auth.require(Payload.self)
+        let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: request.db)
+        
+        let pictureName: String = switch type {
+        case .profile:
+            profile.profilePictureName
+        case .cover:
+            profile.coverImageName
+        }
+        
+        let fullPath: String = switch type {
+        case .profile:
+            try EnvironmentValues.swifeetPicturePath(with: pictureName)
+        case .cover:
+            try EnvironmentValues.swifeetPicturePath(with: pictureName)
+        }
+        
+        let buffer = try await FileSystemHandler.retrive(at: fullPath)
+        
+        return .init(data: .init(buffer: buffer))
     }
     
     @Sendable
