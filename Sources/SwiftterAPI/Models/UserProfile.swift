@@ -148,4 +148,21 @@ extension UserProfile {
         
         return self
     }
+    
+    func updatePicturesName(with name: String, for field: PictureField, at database: any Database) async throws {
+        switch field {
+        case .profile:
+            self.profilePictureName = name
+        case .cover:
+            self.coverImageName = name
+        }
+        
+        try await self.update(on: database)
+    }
+}
+
+extension UserProfile {
+    enum PictureField {
+        case profile, cover
+    }
 }
