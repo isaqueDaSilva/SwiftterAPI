@@ -38,9 +38,11 @@ struct HelperController: RouteCollection, ProtectedRouteProtocol {
                 
                 let profiles = try await [followerProfile, followingProfile]
                 
+                guard profiles.count == 2 else { throw Abort(.notAcceptable, reason: "Failed to find profiles.") }
+                
                 try await Follow(follower: payload.userSlug, following: followingUserSlug).create(on: database)
                 
-                try await FollowService.updateFollow(for: followerProfile, and: followingProfile, with: .increment, at: database)
+                try await FollowService.updateFollow(for: profiles[0], and: profiles[1], with: .increment, at: database)
             }
         }
         
