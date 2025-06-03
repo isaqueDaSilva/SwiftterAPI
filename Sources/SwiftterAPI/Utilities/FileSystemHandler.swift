@@ -12,12 +12,12 @@ import NIOFileSystem
 enum FileSystemHandler {
     private static let fileSystem = FileSystem.shared
     
-    /// Write a file at the file system.
+    /// Add or replace a file on the file system.
     /// - Parameters:
     ///   - buffer: A buffer that stores the bytes of the file,
     ///   - path: The file path to store the file at the file system.
     static func write(_ buffer: ByteBuffer, at path: String) async throws {
-        _ = try await fileSystem.withFileHandle(
+        _ = try await Self.fileSystem.withFileHandle(
             forWritingAt: .init(path),
             options: .newFile(replaceExisting: true)
         ) { file in
@@ -38,12 +38,26 @@ enum FileSystemHandler {
     }
     
     
-    /// Deletes a file that is stored at a path.
-    /// - Parameter path: The path that the file is stored.
+    /// Deletes all files stored at a given path.
+    /// - Parameter paths: All paths of the file that will be deleted.
     /// - Returns: Retuns a boolean value indicating if the process occur with success or not.
-    static func delete(at path: String) async throws -> Bool {
-        let numberOfDeletedFiles = try await fileSystem.removeItem(at: .init(path))
+    static func delete(at paths: String...) async throws -> Bool {
+        let filesDeleted = try await withThrowingTaskGroup(returning: Int.self) { group in
+            for path in paths {
+                _ = group.addTaskUnlessCancelled {
+                    try await Self.fileSystem.removeItem(at: .init(path))
+                }
+            }
+            
+            var filesDeleted = 0
+            
+            for try await number in group {
+                filesDeleted += number
+            }
+            
+            return filesDeleted
+        }
         
-        return numberOfDeletedFiles == 1
+        return filesDeleted == paths.count
     }
 }
