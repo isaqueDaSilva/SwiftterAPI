@@ -23,8 +23,7 @@ extension DisabledToken {
                 .field(
                     FieldName.tokenValue.key,
                     .string,
-                    .required,
-                    .sql(.unique)
+                    .required
                 )
                 .field(
                     FieldName.disabledAt.key,
