@@ -24,7 +24,7 @@ enum FollowService {
             .query(on: database)
             .with(\.$follower)
             .with(\.$following)
-            .group(.and) { group in
+            .group(.or) { group in
                 group
                     .filter(\.$follower.$id, .equal, followerSlug)
                     .filter(\.$following.$id, .equal, followerSlug)
