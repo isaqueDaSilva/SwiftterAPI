@@ -15,7 +15,7 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         let profileRoute = routes.grouped("profile")
         let tokenProtectedRoute = self.tokenProtectedRoute(with: profileRoute)
         
-        tokenProtectedRoute.get("profile", .parameter(self.slugParameterKey)) { try await self.getProfile(with: $0) }
+        tokenProtectedRoute.get(.parameter(self.slugParameterKey)) { try await self.getProfile(with: $0) }
         
         tokenProtectedRoute.get("search", .parameter(self.slugParameterKey)) { try await self.searchProfile(with: $0) }
         
