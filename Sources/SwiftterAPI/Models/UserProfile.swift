@@ -127,7 +127,7 @@ extension UserProfile {
         case .increment:
             self.followingCount += 1
         case .decrement:
-            guard followersCount > 0 else { return }
+            guard followingCount > 0 else { return }
             
             self.followingCount -= 1
         }
