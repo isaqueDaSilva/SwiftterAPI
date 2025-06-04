@@ -22,6 +22,7 @@ enum DatabaseConfiguration {
     static func setMigrations(for application: Application) {
         application.migrations.add(User.Migration())
         application.migrations.add(UserProfile.Migration())
+        application.migrations.add(Follow.Migration())
         application.migrations.add(DisabledToken.Migration())
     }
 }
