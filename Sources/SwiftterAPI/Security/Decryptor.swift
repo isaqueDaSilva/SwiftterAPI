@@ -15,7 +15,7 @@ enum Decryptor {
     /// - Returns: Returns a string representation of the encrypted field.
     static func decryptField(_ field: Data, with keyPair: ECKeyPair) async throws -> String {
         guard let serverPrivateKey = await SecureKeysCache.shared[keyPair.privateKeyID] else {
-            throw Abort(.internalServerError, reason: "No Server's private key available.")
+            throw Abort(.internalServerError)
         }
         
         let clientPublicKey = try PublicKey(rawRepresentation: keyPair.publicKey)
