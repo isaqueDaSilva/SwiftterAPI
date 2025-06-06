@@ -24,5 +24,8 @@ enum DatabaseConfiguration {
         application.migrations.add(UserProfile.Migration())
         application.migrations.add(Follow.Migration())
         application.migrations.add(DisabledToken.Migration())
+        application.migrations.add(Swifeet.Migration())
+        application.migrations.add(Like.Migration())
+        application.migrations.add(Topic.Migration())
     }
 }
