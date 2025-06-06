@@ -1,3 +1,10 @@
+//
+//  Swifeet.swift
+//  SwiftterAPI
+//
+//  Created by Isaque da Silva on 6/4/25.
+//
+
 import Fluent
 import Vapor
 
@@ -5,15 +12,15 @@ import Vapor
 final class Swifeet: Model, @unchecked Sendable {
     static let schema = "swifeet"
     
-    /// An unique identifier to identify the user's post.
+    /// An unique identifier to identify a post.
     ///
-    /// This identifier is composed by a user slug,  the creation date of the swifeet in ISO 8601 style and a random number.
+    /// This identifier is composed by a profile slug, a random number and a date of creation of the swifeet in ISO 8601 style.
     @ID(custom: FieldName.id.key, generatedBy: .user)
     var id: String?
     
-    /// The user that made this post.
-    @Parent(key: FieldName.userProfileID.key)
-    var user: UserProfile
+    /// The profile that mades this post.
+    @Parent(key: FieldName.profileSlug.key)
+    var profile: UserProfile
     
     /// The text body representation of the post.
     @OptionalField(key: FieldName.body.key)
@@ -23,15 +30,9 @@ final class Swifeet: Model, @unchecked Sendable {
     @OptionalField(key: FieldName.imageName.key)
     var imageName: String?
     
-    /// An identifier that indicates if this post is an origial post or a answer of some other post.
-    ///
-    /// >Note: When this post will be an original post, this field will be setted as "Original", but when this post will be an answer, this field will be setted with the identifier of the original swifeet..
-    @Field(key: FieldName.answerOf.key)
-    var answerOf: String
-    
-    /// Stores the current count of likes for this swifeet.
-    @Field(key: FieldName.likesCount.key)
-    var likeCount: Int
+    /// Stores the id of the original Swifeet, if it was an answer.
+    @OptionalField(key: FieldName.answerOf.key)
+    var answerOf: String?
     
     /// Stores the current count of answers for this swifeet.
     @Field(key: FieldName.answersCount.key)
@@ -41,9 +42,9 @@ final class Swifeet: Model, @unchecked Sendable {
     @Children(for: \.$swifeet)
     var likes: [Like]
     
-    /// A boolean value that indicates if the swifeet is alive or was deleted by user.
-    @Field(key: FieldName.isDeleted.key)
-    var isDeleted: Bool
+    /// Stores the current count of likes for this swifeet.
+    @Field(key: FieldName.likesCount.key)
+    var likeCount: Int
     
     /// Indicates when this post was created.
     @Field(key: FieldName.createdAt.key)
@@ -52,20 +53,20 @@ final class Swifeet: Model, @unchecked Sendable {
     init() { }
     
     init(
-        with dto: CreateSwifeet,
-        userSlug: String,
+        body: String?,
+        answerOf: String?,
+        profileSlug: String,
         imageName: String?
     ) {
         let createdAt = Date()
         
-        self.id = userSlug + createdAt.ISO8601Format().lowercased() + "\(Int.random(in: .min ... .max))"
-        self.$user.id = userSlug
-        self.body = dto.body
+        self.id = profileSlug + "-" + "\(Int.random(in: .min ... .max))" + "-" + createdAt.ISO8601Format()
+        self.$profile.id = profileSlug
+        self.body = body
         self.imageName = imageName
-        self.answerOf = dto.answerOf ?? Self.defaultAnswerOf
-        self.likeCount = 0
+        self.answerOf = answerOf
         self.answersCount = 0
-        self.isDeleted = false
+        self.likeCount = 0
         self.createdAt = createdAt
     }
 }
