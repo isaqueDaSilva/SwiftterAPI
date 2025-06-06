@@ -1,3 +1,10 @@
+//
+//  Topic.swift
+//  SwiftterAPI
+//
+//  Created by Isaque da Silva on 6/6/25.
+//
+
 import Fluent
 import Vapor
 
@@ -18,22 +25,20 @@ final class Topic: Model, @unchecked Sendable {
     var counter: Int
     
     /// Indicates when this topic was mentioned for the first time.
-    @Timestamp(key: FieldName.createdAt.key, on: .create)
-    var createdAt: Date?
+    @Field(key: FieldName.createdAt.key)
+    var createdAt: Date
     
     /// Indicates the last time that this topic was mentioned.
-    @Timestamp(key: FieldName.updatedAt.key, on: .update)
-    var updatedAt: Date?
+    @Field(key: FieldName.updatedAt.key)
+    var updatedAt: Date
     
     init() { }
     
-    init(
-        _ topic: String
-    ) {
+    init(topicName: String) {
         self.id = nil
-        self.topic = topic
+        self.topic = topicName
         self.counter = 1
-        self.createdAt = nil
-        self.updatedAt = nil
+        self.createdAt = .now
+        self.updatedAt = .now
     }
 }
