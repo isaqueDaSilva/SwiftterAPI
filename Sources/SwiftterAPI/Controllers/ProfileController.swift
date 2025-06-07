@@ -31,6 +31,14 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         
         tokenProtectedRoute.get("cover-picture") { try await self.getPicture(with: $0, and: .cover) }
         
+        tokenProtectedRoute.get("swifeets", .parameter(self.slugParameterKey)) {
+            try await self.getSwifeets(with: $0, withAnswer: false)
+        }
+        
+        tokenProtectedRoute.get("replies", .parameter(self.slugParameterKey)) {
+            try await self.getSwifeets(with: $0, withAnswer: true)
+        }
+        
         tokenProtectedRoute.patch("update") { try await self.updateProfile(with: $0) }
         
         tokenProtectedRoute.on(.PATCH, "update", "profile-picture", body: .collect(maxSize: "1mb")) {
@@ -89,14 +97,10 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         
         try UpdateProfile.validate(content: request)
         
-        let updatedProfile: Profile = try await request.db.transaction { database in
-            let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: database)
-            let updatedProfile = try await profile.updateFields(with: updateProfileDTO, at: database)
-            
-            return try updatedProfile.toDTO()
-        }
+        let profile = try await UserProfileService.getProfile(by: payload.userSlug, on: request.db)
+        let updatedProfile = try await profile.updateFields(with: updateProfileDTO, at: request.db)
         
-        return updatedProfile
+        return try updatedProfile.toDTO()
     }
     
     @Sendable
@@ -114,7 +118,7 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         
         switch pictureName {
         case UserProfile.defaultImageName:
-            let pictureName = payload.userSlug + "\(Int.random(in: .min ... .max))" + Date().ISO8601Format()
+            let pictureName = payload.userSlug + "-" + Date().ISO8601Format() + "-" + "\(Int.random(in: .min ... .max))"
             
             let fullPath: String = switch type {
             case .profile:
@@ -192,6 +196,33 @@ struct ProfileController: RouteCollection, ProtectedRouteProtocol {
         try await profile.updatePicturesName(with: UserProfile.defaultImageName, for: type, at: request.db)
         
         return .ok
+    }
+    
+    @Sendable
+    private func getSwifeets(with request: Request, withAnswer: Bool) async throws -> Page<ReadSwifeet> {
+        guard request.auth.has(Payload.self) else { throw Abort(.unauthorized) }
+        
+        let profileSlug = try request.parameters.require(self.slugParameterKey)
+        
+        let swifeetsQuery = Swifeet.query(on: request.db).with(\.$profile)
+        
+        let swifeets: Page<Swifeet> = switch withAnswer {
+        case true:
+            try await swifeetsQuery
+                .filter(\.$profile.$id, .equal, profileSlug)
+                .paginate(for: request)
+        case false:
+            try await swifeetsQuery
+                .group(.and) { group in
+                    group
+                        .filter(\.$answerOf, .equal, nil)
+                        .filter(\.$profile.$id, .equal, profileSlug)
+                }
+                .paginate(for: request)
+            
+        }
+        
+        return try Page(items: swifeets.items.toDTOCollection(), metadata: swifeets.metadata)
     }
 }
 
