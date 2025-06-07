@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftterAPI}",
+            "name": "Debug SwiftterAPI",
+            "program": "${workspaceFolder:SwiftterAPI}/.build/debug/SwiftterAPI",
+            "preLaunchTask": "swift: Build Debug SwiftterAPI"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftterAPI}",
+            "name": "Release SwiftterAPI",
+            "program": "${workspaceFolder:SwiftterAPI}/.build/release/SwiftterAPI",
+            "preLaunchTask": "swift: Build Release SwiftterAPI"
+        }
+    ]
+}
