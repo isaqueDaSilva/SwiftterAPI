@@ -135,6 +135,19 @@ extension UserProfile {
         try await self.update(on: database)
     }
     
+    func updateSwifeetCount(with type: UpdateType, at database: any Database) async throws {
+        switch type {
+        case .increment:
+            self.swifeetCount += 1
+        case .decrement:
+            guard swifeetCount > 0 else { return }
+            
+            self.swifeetCount -= 1
+        }
+        
+        try await self.update(on: database)
+    }
+    
     func updateFields(with dto: UpdateProfile, at database: any Database) async throws -> UserProfile {
         if let bio = dto.bio, self.bio != bio {
             self.bio = bio
