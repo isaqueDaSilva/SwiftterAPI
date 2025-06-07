@@ -29,7 +29,7 @@ final class Like: Model, @unchecked Sendable {
     
     /// The user that create the like.
     @Parent(key: FieldName.profileSlug.key)
-    var user: UserProfile
+    var profile: UserProfile
     
     /// The swifeet that the user made the like.
     @Parent(key: FieldName.swifeetID.key)
@@ -40,10 +40,24 @@ final class Like: Model, @unchecked Sendable {
     
     init() { }
     
-    init(userSlug: UserProfile.IDValue, swifeetID: Swifeet.IDValue) {
-        self.id = "LIKE" + "-" + userSlug + "-" + swifeetID
-        self.$user.id = userSlug
+    init(profileSlug: UserProfile.IDValue, swifeetID: Swifeet.IDValue) {
+        self.id = "LIKE" + "-" + profileSlug + "-" + swifeetID
+        self.$profile.id = profileSlug
         self.$swifeet.id = swifeetID
         self.likedAt = nil
+    }
+}
+
+extension Array where Element == Like {
+    func toProfilePreview() throws -> [ProfilePreview] {
+        try self.map { like in
+            let profile = like.profile
+            
+            return try .init(
+                slug: profile.requireID(),
+                bio: profile.bio,
+                profilePictureName: profile.profilePictureName
+            )
+        }
     }
 }
