@@ -15,6 +15,7 @@ func routes(_ app: Application) throws {
     try apiRoute.register(collection: AuthController())
     try apiRoute.register(collection: HelperController())
     try apiRoute.register(collection: ProfileController())
+    try apiRoute.register(collection: SwifeetController())
     
     print(app.routes.all)
 }
