@@ -12,6 +12,7 @@ extension UserProfile {
     struct Migration: AsyncMigration {
         let schema = UserProfile.schema
         let userSchema = User.schema
+        let userID = User.FieldName.id.key
         
         func prepare(on database: any Database) async throws {
             try await database.schema(schema)
@@ -26,7 +27,7 @@ extension UserProfile {
                     .string,
                     .references(
                         userSchema,
-                        "id",
+                        userID,
                         onDelete: .cascade
                     ),
                     .sql(.unique)

@@ -13,7 +13,7 @@ final class Topic: Model, @unchecked Sendable {
     static let schema = "topic"
     
     /// An unique identifier for a topic on database.
-    @ID(key: .id)
+    @ID(custom: FieldName.id.key, generatedBy: .user)
     var id: UUID?
     
     /// A representation for an topic.
@@ -35,7 +35,7 @@ final class Topic: Model, @unchecked Sendable {
     init() { }
     
     init(topicName: String) {
-        self.id = nil
+        self.id = .init()
         self.topic = topicName
         self.counter = 1
         self.createdAt = .now
