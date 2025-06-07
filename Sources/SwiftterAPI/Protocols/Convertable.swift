@@ -12,3 +12,9 @@ protocol Convertable {
     
     func toDTO() throws -> DTO
 }
+
+extension Array where Element: Convertable {
+    func toDTOCollection() throws -> [Element.DTO] {
+        try self.map({ try $0.toDTO() })
+    }
+}
