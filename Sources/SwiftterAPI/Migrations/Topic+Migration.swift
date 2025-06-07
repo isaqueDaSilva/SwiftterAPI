@@ -14,7 +14,13 @@ extension Topic {
         
         func prepare(on database: any Database) async throws {
             try await database.schema(schema)
-                .id()
+                .field(
+                    FieldName.id.key,
+                    .uuid,
+                    .identifier(auto: false),
+                    .sql(.unique),
+                    .required
+                )
                 .field(
                     FieldName.topic.key,
                     .string,
