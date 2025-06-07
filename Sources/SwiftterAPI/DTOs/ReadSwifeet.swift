@@ -1,3 +1,10 @@
+//
+//  ReadSwifeet.swift
+//  SwiftterAPI
+//
+//  Created by Isaque da Silva on 6/6/25.
+//
+
 import Vapor
 
 struct ReadSwifeet: Content {
@@ -5,8 +12,8 @@ struct ReadSwifeet: Content {
     let userSlug: String
     let body: String?
     let imageName: String?
-    let likes: [ReadLikes]
-    let answerOf: String
-    let isDeleted: Bool
+    let answerOf: String?
+    let answerCount: Int
+    let likesCount: Int
     let createdAt: Date
 }
