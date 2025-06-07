@@ -54,9 +54,9 @@ final class Swifeet: Model, @unchecked Sendable {
     
     init(
         body: String?,
+        imageName: String?,
         answerOf: String?,
-        profileSlug: String,
-        imageName: String?
+        profileSlug: String
     ) {
         let createdAt = Date()
         
@@ -68,5 +68,50 @@ final class Swifeet: Model, @unchecked Sendable {
         self.answersCount = 0
         self.likeCount = 0
         self.createdAt = createdAt
+    }
+}
+
+extension Swifeet: Convertable {
+    typealias DTO = ReadSwifeet
+    
+    func toDTO() throws -> ReadSwifeet {
+        try .init(
+            id: self.requireID(),
+            userSlug: self.profile.requireID(),
+            body: self.body,
+            imageName: self.imageName,
+            answerOf: self.answerOf,
+            answerCount: self.answersCount,
+            likesCount: self.likeCount,
+            createdAt: self.createdAt
+        )
+    }
+}
+
+extension Swifeet {
+    func updateAnswersCount(with updateType: UpdateType, at database: any Database) async throws {
+        switch updateType {
+        case .increment:
+            self.answersCount += 1
+        case .decrement:
+            guard answersCount > 0 else { return }
+            
+            self.answersCount -= 1
+        }
+        
+        try await self.update(on: database)
+    }
+    
+    func updateLikesCount(with updateType: UpdateType, at database: any Database) async throws {
+        switch updateType {
+        case .increment:
+            self.likeCount += 1
+        case .decrement:
+            guard likeCount > 0 else { return }
+            
+            self.likeCount -= 1
+        }
+        
+        try await self.update(on: database)
     }
 }
