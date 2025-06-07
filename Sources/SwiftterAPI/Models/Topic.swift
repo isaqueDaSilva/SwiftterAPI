@@ -42,3 +42,12 @@ final class Topic: Model, @unchecked Sendable {
         self.updatedAt = .now
     }
 }
+
+extension Topic {
+    func updateCounter(on database: any Database) async throws {
+        self.counter += 1
+        
+        try await self.update(on: database)
+    }
+}
+

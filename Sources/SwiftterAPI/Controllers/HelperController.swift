@@ -5,6 +5,7 @@
 //  Created by Isaque da Silva on 5/21/25.
 //
 
+import Fluent
 import Vapor
 
 struct HelperController: RouteCollection, ProtectedRouteProtocol {
@@ -14,7 +15,7 @@ struct HelperController: RouteCollection, ProtectedRouteProtocol {
         let tokenProtectedRoute = self.tokenProtectedRoute(with: routes)
         
         routes.get("public-key") { _ in try await CryptographyHandler.generatesPublicKey() }
-        
+        tokenProtectedRoute.get("feed") { try await self.feed(with: $0) }
         tokenProtectedRoute.patch("follow", .parameter(self.slugParameterKey)) { try await self.follow(with: $0) }
     }
     
@@ -47,5 +48,19 @@ struct HelperController: RouteCollection, ProtectedRouteProtocol {
         }
         
         return .ok
+    }
+    
+    @Sendable
+    private func feed(with request: Request) async throws -> Page<ReadSwifeet> {
+        let payload = try request.auth.require(Payload.self)
+        
+        let swifeets = try await Swifeet
+            .query(on: request.db) // Select
+            .join(UserProfile.self, on: \Swifeet.$profile.$id == \UserProfile.$id)
+            .join(from: UserProfile.self, siblings: \.$followers)
+            .filter(Follow.self, \.$follower.$id == payload.userSlug)
+            .paginate(for: request)
+        
+        return try Page(items: swifeets.items.toDTOCollection(), metadata: swifeets.metadata)
     }
 }
