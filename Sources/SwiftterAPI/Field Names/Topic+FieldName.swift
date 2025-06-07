@@ -9,6 +9,7 @@ import Fluent
 
 extension Topic {
     enum FieldName: String, FieldKeyProtocol {
+        case id = "id"
         case topic = "topic"
         case counter = "counter"
         case createdAt = "created_at"
