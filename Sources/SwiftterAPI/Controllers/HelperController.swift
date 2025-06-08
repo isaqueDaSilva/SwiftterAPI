@@ -55,12 +55,15 @@ struct HelperController: RouteCollection, ProtectedRouteProtocol {
         let payload = try request.auth.require(Payload.self)
         
         let swifeets = try await Swifeet
-            .query(on: request.db) // Select
+            .query(on: request.db)
             .join(UserProfile.self, on: \Swifeet.$profile.$id == \UserProfile.$id)
             .join(from: UserProfile.self, siblings: \.$followers)
             .filter(Follow.self, \.$follower.$id == payload.userSlug)
+            .sort(\.$createdAt, .descending)
             .paginate(for: request)
         
         return try Page(items: swifeets.items.toDTOCollection(), metadata: swifeets.metadata)
     }
+    
+    
 }
