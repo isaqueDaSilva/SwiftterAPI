@@ -17,7 +17,7 @@ final actor SecureKeysCache {
     private var deleterTask: Task<Void, Never>? = nil
     
     private var privateKeys: [UUID: PrivateKey] = [:]
-    private var deleterQueue: OrderedDictionary<Date, UUID> = [:]
+    private var deleterQueue: OrderedDictionary<UUID, Date> = [:]
     
     /// Adds a new key at the storage.
     /// - Parameters:
@@ -27,7 +27,7 @@ final actor SecureKeysCache {
         let twoMinutesInterval: TimeInterval = 60 * 2
         let twoMinutesFromNow = Date().addingTimeInterval(twoMinutesInterval)
         self.privateKeys[id] = privateKey
-        self.deleterQueue[twoMinutesFromNow] = id
+        self.deleterQueue[id] = twoMinutesFromNow
         
         if self.deleterTask == nil {
             self.deleterTask?.cancel()
@@ -37,23 +37,27 @@ final actor SecureKeysCache {
     
     /// Removes a key from the storage.
     /// - Parameter id: The id of the key that will be removed.
-    func remove(for id: UUID) { privateKeys[id] = nil }
+    func remove(for id: UUID) {
+        self.privateKeys[id] = nil
+        self.deleterQueue[id] = nil
+        
+        if privateKeys.isEmpty && deleterQueue.isEmpty {
+            self.deleterTask?.cancel()
+            self.deleterTask = nil
+        }
+    }
     
     /// Schedule a periodic checker to check if the header key is expired or not, when the cache is not empty.
     private func check() async {
         while !self.deleterQueue.isEmpty && !self.privateKeys.isEmpty {
-            let (date, id) = (self.deleterQueue.keys.first, self.deleterQueue.values.first)
+            let (id, date) = (self.deleterQueue.keys.first, self.deleterQueue.values.first)
             
             if let date, let id, date <= Date() {
                 self.remove(for: id)
-                self.deleterQueue.removeFirst()
             }
             
             try? await Task.sleep(for: .seconds(120))
         }
-        
-        self.deleterTask?.cancel()
-        self.deleterTask = nil
     }
     
     subscript(_ id: UUID) -> PrivateKey? {
@@ -61,11 +65,6 @@ final actor SecureKeysCache {
         
         if key != nil {
             self.remove(for: id)
-        }
-        
-        if privateKeys.isEmpty && deleterQueue.isEmpty {
-            self.deleterTask?.cancel()
-            self.deleterTask = nil
         }
         
         return key
