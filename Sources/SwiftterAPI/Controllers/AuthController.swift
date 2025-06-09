@@ -98,7 +98,19 @@ extension AuthController {
         let accessToken = request.headers.bearerAuthorization!.token
         let refreshToken = request.headers.refreshToken
         
-        guard let refreshToken else {
+        if let refreshToken {
+            let refreshTokenPayload = try await request.jwt.verify(refreshToken, as: Payload.self)
+            try await UserService.revokeUserAccess(
+                for: accessTokenPayload.subject.value,
+                tokens: [
+                    accessToken: accessTokenPayload,
+                    refreshToken: refreshTokenPayload
+                ],
+                at: request.db
+            )
+            
+            return .ok
+        } else {
             try await UserService.revokeUserAccess(
                 for: accessTokenPayload.subject.value,
                 tokens: [accessToken: accessTokenPayload],
