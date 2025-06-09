@@ -31,15 +31,17 @@ extension AuthController {
         
         let (userID, newUserProfile): (String, UserProfile) = try await request.db.transaction { database in
             let newUser = try await UserService.create(with: createUserRequestDTO, at: database)
-            let userSlug = try await SlugGenerator.generate(for: newUser.name, with: database)
+            let profileSlug = try await SlugGenerator.generate(for: newUser.name)
             let newUserProfile = try await UserProfileService.create(
-                with: userSlug,
+                with: profileSlug,
                 userID: newUser.requireID(),
                 at: database
             )
             
             return (try newUser.requireID(), newUserProfile)
         }
+        
+        try await SlugCache.shared.add(newUserProfile.requireID())
         
         let clientPublicKey = createUserRequestDTO.keyCollection.publicKeyForEncryption
         
