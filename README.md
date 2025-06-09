@@ -16,7 +16,7 @@ A project that seeks to recreate the core features of X (formerly Twitter).
 
 ## Overview
 
-X (formerly Twitter) is a social network whose main objective is to promote open discussions between users on topics through posts, which are mainly composed of texts and media content. The social media also promotes ways to connect with similar people, who may be acquaintances or people whose content they simply like on the plataform.<br>
+X (formerly Twitter) is a social media whose main objective is to promote open discussions between users on topics through posts, which are mainly composed of texts and media content. The plataform also promotes ways to connect with similar people, who may be acquaintances or people whose content they simply like on the plataform.<br>
 Specifically, this API, named Swiftter, a pun that combines the old name of the original plataform and the fact that it was developed entirely on the Swift language, seeks to recreate most of these features, such as posts, the possibility of connecting with people through an action known as "follow", and also its authentication system, all with the focus on being simple, fast and secure.<br>
 
 ## Getting Started
