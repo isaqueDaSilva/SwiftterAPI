@@ -11,9 +11,11 @@ public func configure(_ app: Application) async throws {
     // MARK: Database Configuration
     try DatabaseConfiguration.setDatabase(for: app)
     DatabaseConfiguration.setMigrations(for: app)
-
+    
     try await app.autoMigrate()
     try await app.autoRevert()
+    
+    try await SlugCache.shared.populate(with: app.db)
 
     // MARK: JWT Configuration
     try await JWTConfiguration.setJWT(for: app)
